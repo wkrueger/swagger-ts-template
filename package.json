@@ -1,6 +1,6 @@
 {
   "name": "swagger-ts-template",
-  "version": "1.5.0",
+  "version": "1.7.3",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
@@ -16,13 +16,20 @@
   "author": "Willian Krueger <wkrueger128@gmail.com>",
   "license": "MIT",
   "devDependencies": {
-    "@types/handlebars": "^4.0.31",
     "@types/lodash": "^4.14.36",
+    "@types/mkdirp": "^0.3.29",
     "@types/node": "^6.0.42",
-    "@types/yargs": "0.0.31"
+    "@types/rimraf": "0.0.28",
+    "@types/yargs": "0.0.31",
+    "typescript": "^2.3.2"
   },
   "dependencies": {
+    "cp": "^0.2.0",
+    "ejs": "^2.5.6",
     "lodash": "^4.16.3",
+    "mkdirp": "^0.5.1",
+    "promisify": "git+https://github.com/wkrueger/promisify.git",
+    "rimraf": "^2.6.1",
     "typescript": "^2.1.6",
     "typescript-formatter": "^4.1.1",
     "word-wrap": "^1.1.0",

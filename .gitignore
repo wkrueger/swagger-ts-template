@@ -1,5 +1,4 @@
-test/*.json
-test/*.ts
+test
 *.map
 node_modules
 npm-debug.log
