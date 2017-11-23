@@ -26,10 +26,10 @@ export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
     if (!Object.keys(swaggerDoc[__definitionRoot] || {}).length) {
         throw Error('No definition found in ' + __definitionRoot)
     }
-    let list = []
+    let list : {name;def;}[] = []
     for (let _name in swaggerDoc[__definitionRoot]) {
         list.push({
-            _name,
+            name : _name,
             def : swaggerDoc[__definitionRoot][_name]
         })
     }

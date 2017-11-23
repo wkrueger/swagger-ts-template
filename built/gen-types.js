@@ -26,7 +26,7 @@ function genTypes(swaggerDoc, opts = {}) {
         let list = [];
         for (let _name in swaggerDoc[__definitionRoot]) {
             list.push({
-                _name,
+                name: _name,
                 def: swaggerDoc[__definitionRoot][_name]
             });
         }
