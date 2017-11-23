@@ -44,7 +44,7 @@ ${templ.data.join('\n')}
 
 `
     }
-    console.log('dest', opts.filename)
+    //console.log('dest', opts.filename)
     let result = await formatter.processString(opts.filename, out, {
         editorconfig: false,
         replace: true,

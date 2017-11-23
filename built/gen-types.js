@@ -40,7 +40,7 @@ ${templ.data.join('\n')}
 
 `;
         }
-        console.log('dest', opts.filename);
+        //console.log('dest', opts.filename)
         let result = yield formatter.processString(opts.filename, out, {
             editorconfig: false,
             replace: true,
