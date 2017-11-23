@@ -26,10 +26,22 @@ export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
     if (!Object.keys(swaggerDoc[__definitionRoot] || {}).length) {
         throw Error('No definition found in ' + __definitionRoot)
     }
+    let list = []
     for (let name in swaggerDoc[__definitionRoot]) {
-        //if (name !== 'PurchaseHeaderIn') continue
-        let def: SwaggerType = swaggerDoc[__definitionRoot][name]
+        list.push({
+            name,
+            def : swaggerDoc[__definitionRoot]
+        })
+    }
+    list.sort( (i1, i2) => {
+        if (i1.name == i2.name) return 0
+        return i2.name - i1.name
+    })
 
+    list.forEach( item => {
+        //if (name !== 'PurchaseHeaderIn') continue
+        let def: SwaggerType = item.def
+        
         let templ = typeTemplate(def, 4, true)
         let isInterface = ['object', 'allOf', 'anyOf'].indexOf(templ.type) !== -1
         let keyword = isInterface ? 'interface' : 'type'
@@ -39,11 +51,12 @@ export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
             extend = 'extends' + ' ' + templ.extends.join(',')
         }
         out += `
-${external}${keyword} ${name} ${extend}  ${equals}
-${templ.data.join('\n')}
+        ${external}${keyword} ${name} ${extend}  ${equals}
+        ${templ.data.join('\n')}
+        
+        `
+    })
 
-`
-    }
     //console.log('dest', opts.filename)
     let result = await formatter.processString(opts.filename, out, {
         editorconfig: false,
