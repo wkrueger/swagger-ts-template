@@ -27,10 +27,10 @@ export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
         throw Error('No definition found in ' + __definitionRoot)
     }
     let list = []
-    for (let name in swaggerDoc[__definitionRoot]) {
+    for (let _name in swaggerDoc[__definitionRoot]) {
         list.push({
-            name,
-            def : swaggerDoc[__definitionRoot]
+            _name,
+            def : swaggerDoc[__definitionRoot][_name]
         })
     }
     list.sort( (i1, i2) => {
@@ -51,7 +51,7 @@ export async function genTypes(swaggerDoc:SwaggerDoc, opts: genTypesOpts = {}) {
             extend = 'extends' + ' ' + templ.extends.join(',')
         }
         out += `
-        ${external}${keyword} ${name} ${extend}  ${equals}
+        ${external}${keyword} ${item.name} ${extend}  ${equals}
         ${templ.data.join('\n')}
         
         `
