@@ -1,12 +1,21 @@
-const tstemplate = require('../built/main')
-const defs = require('./test.json')
+const tap = require("tap")
+const tstemplate = require("../built/main")
+const defs = require("./uber.json")
+const path = require("path")
+const fs = require("fs")
+const mkdirp = require("mkdirp")
 
-/*
-tstemplate.genTypes( defs, {
-    external : true,
-    hideComments: true
+tap.test("genTypes", async t => {
+  const resp = await tstemplate.genTypes(defs, {
+    external: true,
+    hideComments: false
+  })
+  mkdirp.sync(path.resolve(__dirname, "output", "gentypes"))
+  fs.writeFileSync(path.resolve(__dirname, "output", "gentypes", "gentypes.d.ts"), resp)
 })
-*/
 
-
-tstemplate.genPaths( defs, {output: './output'} ).then(() => console.log('ended paths test'))
+tap.test("genPaths", async t => {
+  await tstemplate.genPaths(defs, {
+    output: path.resolve(__dirname, "output", "genpaths")
+  })
+})

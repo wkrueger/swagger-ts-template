@@ -1,13 +1,13 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es6",
-        "sourceMap": false ,
-        "outDir" : "built" ,
-        "strict" : true,
-        "noUnusedLocals": true
-    } ,
-    "include" : [
-        "src/**/*.ts"
-    ]
+  "compilerOptions": {
+    "module": "commonjs",
+    "target": "es6",
+    "sourceMap": true,
+    "outDir": "built",
+    "strict": true,
+    "noUnusedLocals": true,
+    "pretty": false,
+    "noImplicitAny": false
+  },
+  "include": ["src/**/*.ts"]
 }

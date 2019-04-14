@@ -10,18 +10,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const _ = require("lodash");
 const formatter = require("typescript-formatter");
-const wordwrap = require('word-wrap');
+const util_1 = require("util");
+const fs = require("fs");
+const wordwrap = require("word-wrap");
 var __mainDoc;
 var __definitionRoot;
 function genTypes(swaggerDoc, opts = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        opts.filename = opts.filename || 'typing_' + Math.ceil(Math.random() * 10000) + '.d.ts';
-        __definitionRoot = opts.searchWithin || 'definitions';
+        //ts formatter requires a file
+        //TODO use prettier
+        const originalFilename = opts.filename;
+        const mapVariableName = opts.mapVariableName || (s => s);
+        opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts";
+        __definitionRoot = opts.searchWithin || "definitions";
         __mainDoc = swaggerDoc;
-        var out = '';
-        let external = opts.external ? 'export ' : '';
+        var out = "";
+        let external = opts.external ? "export " : "";
         if (!Object.keys(swaggerDoc[__definitionRoot] || {}).length) {
-            throw Error('No definition found in ' + __definitionRoot);
+            throw Error("No definition found in " + __definitionRoot);
         }
         let list = [];
         for (let _name in swaggerDoc[__definitionRoot]) {
@@ -38,17 +44,17 @@ function genTypes(swaggerDoc, opts = {}) {
         list.forEach(item => {
             //if (name !== 'PurchaseHeaderIn') continue
             let def = item.def;
-            let templ = typeTemplate(def, 4, true);
-            let isInterface = ['object', 'allOf', 'anyOf'].indexOf(templ.type) !== -1;
-            let keyword = isInterface ? 'interface' : 'type';
-            let equals = isInterface ? '' : ' = ';
-            let extend = '';
+            let templ = typeTemplate(def, true);
+            let isInterface = ["object", "allOf", "anyOf"].indexOf(templ.type) !== -1;
+            let keyword = isInterface ? "interface" : "type";
+            let equals = isInterface ? "" : " = ";
+            let extend = "";
             if (isInterface && (templ.extends || []).length) {
-                extend = 'extends' + ' ' + templ.extends.join(',');
+                extend = "extends" + " " + (templ.extends || []).join(",");
             }
             out += `
-        ${external}${keyword} ${item.name} ${extend}  ${equals}
-        ${templ.data.join('\n')}
+        ${external}${keyword} ${mapVariableName(item.name)} ${extend}  ${equals}
+        ${templ.data.join("\n")}
         
         `;
         });
@@ -59,51 +65,58 @@ function genTypes(swaggerDoc, opts = {}) {
             tsconfig: false,
             tsfmt: false,
             tslint: false,
-            verify: false
+            verify: false,
+            tsconfigFile: null,
+            tslintFile: null,
+            vscode: false,
+            vscodeFile: null,
+            tsfmtFile: null
         });
+        if (!originalFilename)
+            yield util_1.promisify(fs.unlink)(opts.filename);
         return result.dest;
-        function typeTemplate(swaggerType, indent = 0, embraceObjects = false) {
+        function typeTemplate(swaggerType, embraceObjects = false) {
             function wrap() {
                 if (swaggerType.$ref) {
-                    let split = swaggerType.$ref.split('/');
+                    let split = swaggerType.$ref.split("/");
                     return {
                         data: [split[split.length - 1]],
-                        type: 'ref'
+                        type: "ref"
                     };
                 }
                 if (swaggerType.enum) {
                     let typestr = swaggerType.enum.reduce((bef, curr) => {
-                        if (typeof curr === 'string')
+                        if (typeof curr === "string")
                             curr = `'${String(curr).replace(/'/g, "\\'")}'`;
                         if (bef)
-                            bef += '|';
+                            bef += "|";
                         bef += String(curr);
                         return bef;
-                    }, '');
+                    }, "");
                     let wrapped = wrapLiteral(typestr);
-                    return { data: wrapped, type: 'enum' };
+                    return { data: wrapped, type: "enum" };
                 }
-                if (~['integer', 'double', 'number'].indexOf(swaggerType.type)) {
-                    return { data: ['number'], type: 'primitive' };
+                if (~["integer", "double", "number"].indexOf(swaggerType.type)) {
+                    return { data: ["number"], type: "primitive" };
                 }
-                if (~['string', 'boolean'].indexOf(swaggerType.type)) {
-                    return { data: [swaggerType.type], type: 'primitive' };
+                if (~["string", "boolean"].indexOf(swaggerType.type)) {
+                    return { data: [swaggerType.type], type: "primitive" };
                 }
-                if (swaggerType.type === 'object' || swaggerType.properties) {
+                if (swaggerType.type === "object" || swaggerType.properties) {
                     let aux = _.toPairs(swaggerType.properties).map(pair => {
                         var [key, prop] = pair;
-                        let current = typeTemplate(prop, indent, true).data;
-                        let required = (swaggerType.required && swaggerType.required.indexOf(key) != -1) ?
-                            '' : '?';
+                        let current = typeTemplate(prop, true).data;
+                        let required = swaggerType.required && swaggerType.required.indexOf(key) != -1 ? "" : "?";
                         if (opts.noOptionals)
-                            required = '';
-                        current[0] = `${key}${required} : ${current[0].trim()}`;
+                            required = "";
+                        current[0] = `${key}${required} : ${mapVariableName(current[0].trim())}`;
                         if (prop.description && !opts.hideComments) {
                             var doc = [
-                                '/**',
+                                "/**",
                                 ...wordwrap(prop.description, { width: 60 })
-                                    .split('\n').map(s => ` *  ${s.trim()}`),
-                                ' */'
+                                    .split("\n")
+                                    .map(s => ` *  ${s.trim()}`),
+                                " */"
                             ];
                             current = [...doc, ...current];
                         }
@@ -116,30 +129,31 @@ function genTypes(swaggerDoc, opts = {}) {
                             joined[0] = `{ ${aux[0]} }`;
                         }
                         else {
-                            joined.unshift('{');
-                            joined.push('}');
+                            joined.unshift("{");
+                            joined.push("}");
                         }
                     }
-                    return { data: joined, type: 'object' };
+                    return { data: joined, type: "object" };
                 }
-                if (swaggerType.type === 'array' || swaggerType.items) {
-                    let inner = typeTemplate(swaggerType.items, 0, true).data;
-                    inner[inner.length - 1] += '[]';
-                    return { data: inner, type: 'array' };
+                if (swaggerType.type === "array" || swaggerType.items) {
+                    let inner = typeTemplate(swaggerType.items, true).data;
+                    inner[inner.length - 1] += "[]";
+                    return { data: inner, type: "array" };
                 }
                 if (swaggerType.allOf) {
                     let merged = mergeAllof(swaggerType);
                     return {
-                        data: ['{', ...typeTemplate(merged.swaggerDoc).data, '}'],
-                        type: 'allOf',
+                        data: ["{", ...typeTemplate(merged.swaggerDoc).data, "}"],
+                        type: "allOf",
                         extends: merged.extends
                     };
                 }
                 if (swaggerType.anyOf) {
-                    let merged = mergeAllof(swaggerType, 'anyOf');
+                    //typedef says anyOf does not belong to swagger Schema
+                    let merged = mergeAllof(swaggerType, "anyOf");
                     return {
-                        data: ['{', ...typeTemplate(merged.swaggerDoc).data, '}'],
-                        type: 'anyOf',
+                        data: ["{", ...typeTemplate(merged.swaggerDoc).data, "}"],
+                        type: "anyOf",
                         extends: merged.extends
                     };
                 }
@@ -147,7 +161,7 @@ function genTypes(swaggerDoc, opts = {}) {
             }
             let out = wrap();
             return {
-                data: out.data.map(ln => _.repeat(' ', indent) + ln),
+                data: out.data,
                 type: out.type,
                 extends: out.extends
             };
@@ -155,16 +169,16 @@ function genTypes(swaggerDoc, opts = {}) {
     });
 }
 exports.genTypes = genTypes;
-function mergeAllof(swaggerType, key = 'allOf') {
+function mergeAllof(swaggerType, key = "allOf") {
     let item = swaggerType[key];
     if (!item)
-        throw Error('wrong mergeAllOf call.');
+        throw Error("wrong mergeAllOf call.");
     var extend = [];
     let merged = item.reduce((prev, toMerge) => {
         let refd;
         if (toMerge.$ref) {
-            let split = toMerge.$ref.split('/');
-            if (split[0] === '#' && split[1] === __definitionRoot && split.length === 3) {
+            let split = toMerge.$ref.split("/");
+            if (split[0] === "#" && split[1] === __definitionRoot && split.length === 3) {
                 extend.push(split[2]);
                 return prev;
             }
@@ -174,12 +188,12 @@ function mergeAllof(swaggerType, key = 'allOf') {
             refd = toMerge;
         }
         if (refd.allOf)
-            refd = mergeAllof(refd, 'allOf').swaggerDoc;
+            refd = mergeAllof(refd, "allOf").swaggerDoc;
         else if (refd.anyOf)
-            refd = mergeAllof(refd, 'anyOf').swaggerDoc;
+            refd = mergeAllof(refd, "anyOf").swaggerDoc;
         //typedef says anyOf does not belong to swagger schema
         if (!refd.properties) {
-            console.error('allOf merge: unsupported object type at ' + JSON.stringify(toMerge));
+            console.error("allOf merge: unsupported object type at " + JSON.stringify(toMerge));
         }
         for (var it in refd.properties) {
             //if ((<any>prev).properties[it]) console.error('property', it, 'overwritten in ', JSON.stringify(toMerge).substr(0,80));
@@ -187,25 +201,25 @@ function mergeAllof(swaggerType, key = 'allOf') {
             prev.properties[it] = refd.properties[it];
         }
         return prev;
-    }, { type: 'object', properties: {} });
+    }, { type: "object", properties: {} });
     return { swaggerDoc: merged, extends: extend };
 }
 function findDef(src, path) {
-    if (path[0] == '#')
+    if (path[0] == "#")
         path = path.slice(1);
     if (!path.length)
         return src;
     return findDef(src[path[0]], path.slice(1));
 }
 function wrapLiteral(inp) {
-    let items = inp.split('|');
+    let items = inp.split("|");
     let allLines = [];
-    let currentLine = '';
+    let currentLine = "";
     items.forEach(i => {
-        currentLine += i + '|';
+        currentLine += i + "|";
         if (currentLine.length > 40) {
             allLines.push(currentLine);
-            currentLine = '';
+            currentLine = "";
         }
     });
     if (currentLine) {
@@ -216,3 +230,4 @@ function wrapLiteral(inp) {
     allLines[allLines.length - 1] = last;
     return allLines;
 }
+//# sourceMappingURL=gen-types.js.map
