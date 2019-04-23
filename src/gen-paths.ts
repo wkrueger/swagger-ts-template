@@ -11,11 +11,13 @@ type SwaggerDoc = SwaggerIo.V2.SchemaJson
 
 type genPathsOpts = {
   output: string
+  moduleStyle: "commonjs" | "esm"
   typesOpts?: genTypesOpts
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   if (!opts.output) throw Error("Missing parameter: output.")
+  opts.moduleStyle = opts.moduleStyle || "commonjs"
 
   await promisify(rimraf)(opts.output)
   await promisify(mkdirp as any)(path.resolve(opts.output, "modules"))
@@ -93,9 +95,11 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return [...out, ...spread]
   }, []) // [ Operation ] __tag__ : string
   tags = _.groupBy(tags, "__tag__") // { [__tag__:string] : Operation[] }
-  tags = _.mapValues(tags, (value, key) => {
+  tags = _.mapValues(tags, value => {
     let uniq = {}
     value.forEach(v => {
+      if (!v.operationId)
+        throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
       uniq[v.operationId] = v
     })
     return _.values(uniq)
@@ -162,8 +166,23 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   await _.toPairs(tags).reduce(async (chain, [tag, operations]) => {
     await chain
     __usesTypes = false
-    let merged = compiled({ operations, paramsType, responseType, strip })
-    if (__usesTypes) merged = "import Types = require('../api-types')\n" + merged
+    let merged = compiled({
+      operations,
+      paramsType,
+      responseType,
+      strip,
+      getImportString,
+      style: opts.moduleStyle
+    })
+    if (__usesTypes)
+      merged =
+        getImportString({
+          variable: "Types",
+          module: "../api-types",
+          style: opts.moduleStyle
+        }) +
+        "\n" +
+        merged
     await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
   }, Promise.resolve())
 
@@ -193,7 +212,15 @@ function camelCased(tag: string) {
     .reduce((a, b) => a + b, "")
 }
 
-let templateStr = `import ApiCommon = require('../api-common')
+function getImportString(i: { variable: string; module: string; style: "commonjs" | "esm" }) {
+  if (i.style === "commonjs") {
+    return `import ${i.variable} = require('${i.module}')`
+  } else {
+    return `import * as ${i.variable} from '${i.module}'`
+  }
+}
+
+let templateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>

@@ -1,6 +1,6 @@
 {
   "name": "swagger-ts-template",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
@@ -12,7 +12,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "tap test/*.js"
+    "test": "tsc && tap test/*.js"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.36",

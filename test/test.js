@@ -16,6 +16,7 @@ tap.test("genTypes", async t => {
 
 tap.test("genPaths", async t => {
   await tstemplate.genPaths(defs, {
-    output: path.resolve(__dirname, "output", "genpaths")
+    output: path.resolve(__dirname, "output", "genpaths"),
+    moduleStyle: "esm"
   })
 })

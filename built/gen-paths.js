@@ -20,6 +20,7 @@ function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!opts.output)
             throw Error("Missing parameter: output.");
+        opts.moduleStyle = opts.moduleStyle || "commonjs";
         yield util_1.promisify(rimraf)(opts.output);
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
@@ -89,9 +90,11 @@ function genPaths(swaggerDoc, opts) {
             return [...out, ...spread];
         }, []); // [ Operation ] __tag__ : string
         tags = _.groupBy(tags, "__tag__"); // { [__tag__:string] : Operation[] }
-        tags = _.mapValues(tags, (value, key) => {
+        tags = _.mapValues(tags, value => {
             let uniq = {};
             value.forEach(v => {
+                if (!v.operationId)
+                    throw Error(`operationId missing for ${v.__verb__.toUpperCase()} ${v.__path__}`);
                 uniq[v.operationId] = v;
             });
             return _.values(uniq);
@@ -163,9 +166,23 @@ function genPaths(swaggerDoc, opts) {
         yield _.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
             yield chain;
             __usesTypes = false;
-            let merged = compiled({ operations, paramsType, responseType, strip });
+            let merged = compiled({
+                operations,
+                paramsType,
+                responseType,
+                strip,
+                getImportString,
+                style: opts.moduleStyle
+            });
             if (__usesTypes)
-                merged = "import Types = require('../api-types')\n" + merged;
+                merged =
+                    getImportString({
+                        variable: "Types",
+                        module: "../api-types",
+                        style: opts.moduleStyle
+                    }) +
+                        "\n" +
+                        merged;
             yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
         }), Promise.resolve());
         function unRef(param) {
@@ -192,7 +209,15 @@ function camelCased(tag) {
     })
         .reduce((a, b) => a + b, "");
 }
-let templateStr = `import ApiCommon = require('../api-common')
+function getImportString(i) {
+    if (i.style === "commonjs") {
+        return `import ${i.variable} = require('${i.module}')`;
+    }
+    else {
+        return `import * as ${i.variable} from '${i.module}'`;
+    }
+}
+let templateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>

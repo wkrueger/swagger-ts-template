@@ -35,3 +35,4 @@ if (action === 'types') {
             .catch(console.error);
     });
 }
+//# sourceMappingURL=cli.js.map

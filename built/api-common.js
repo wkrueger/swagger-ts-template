@@ -54,3 +54,4 @@ exports.requestMaker = operation => (data) => {
     let payload = paramBuilder(operation, _data);
     return __reqHandler(payload, _data);
 };
+//# sourceMappingURL=api-common.js.map
