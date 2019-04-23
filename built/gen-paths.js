@@ -93,8 +93,12 @@ function genPaths(swaggerDoc, opts) {
         tags = _.mapValues(tags, value => {
             let uniq = {};
             value.forEach(v => {
-                if (!v.operationId)
-                    throw Error(`operationId missing for ${v.__verb__.toUpperCase()} ${v.__path__}`);
+                if (!v.operationId) {
+                    if (opts.failOnMissingOperationId) {
+                        throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
+                    }
+                    return;
+                }
                 uniq[v.operationId] = v;
             });
             return _.values(uniq);

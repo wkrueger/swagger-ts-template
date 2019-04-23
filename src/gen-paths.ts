@@ -12,6 +12,7 @@ type SwaggerDoc = SwaggerIo.V2.SchemaJson
 type genPathsOpts = {
   output: string
   moduleStyle: "commonjs" | "esm"
+  failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
 }
 
@@ -98,8 +99,12 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   tags = _.mapValues(tags, value => {
     let uniq = {}
     value.forEach(v => {
-      if (!v.operationId)
-        throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
+      if (!v.operationId) {
+        if (opts.failOnMissingOperationId) {
+          throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
+        }
+        return
+      }
       uniq[v.operationId] = v
     })
     return _.values(uniq)
