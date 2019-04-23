@@ -102,8 +102,10 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       if (!v.operationId) {
         if (opts.failOnMissingOperationId) {
           throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
+        } else {
+          console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
+          return
         }
-        return
       }
       uniq[v.operationId] = v
     })
