@@ -1,6 +1,6 @@
 {
   "name": "swagger-ts-template",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {

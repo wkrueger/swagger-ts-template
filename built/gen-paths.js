@@ -97,7 +97,10 @@ function genPaths(swaggerDoc, opts) {
                     if (opts.failOnMissingOperationId) {
                         throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
                     }
-                    return;
+                    else {
+                        console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
+                        return;
+                    }
                 }
                 uniq[v.operationId] = v;
             });

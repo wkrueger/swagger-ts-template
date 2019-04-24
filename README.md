@@ -57,14 +57,20 @@ let customer = await CustomerApi.getCustomer({
   customerId: 999
 })
 
-//you may extend the input object in order to expose or require
-//properties to be consumed (for instance) by the request maker function
 declare global {
   namespace GApiCommon {
+    //you may extend the input object in order to expose or require
+    //properties to be consumed (for instance) by the request maker function
     interface RequestHandlerOpts {
       _allowCache: true
       //now TS will point "_allowCache" is missing in the
       //request made above
+    }
+
+    //you may declare properties which are available on every response
+    interface MergeToResponse {
+      page: number
+      numPages: number
     }
   }
 }

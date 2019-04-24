@@ -9,9 +9,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 let __reqHandler = () => __awaiter(this, void 0, void 0, function* () {
-    throw Error('Please define a requestHandler.');
+    throw Error("Please define a requestHandler.");
 });
-exports.setRequestHandler = (handler) => {
+exports.setRequestHandler = handler => {
     __reqHandler = handler;
 };
 function paramBuilder(operation, data) {
@@ -27,20 +27,20 @@ function paramBuilder(operation, data) {
         if (!value)
             return;
         switch (param.in) {
-            case 'path':
-                let rgx = new RegExp('\{' + param.name + '\}');
+            case "path":
+                let rgx = new RegExp("{" + param.name + "}");
                 form.url = form.url.replace(rgx, encodeURIComponent(value));
                 break;
-            case 'body':
+            case "body":
                 form.body = value;
                 break;
             //leave encoding to the sender fn
-            case 'query':
+            case "query":
                 form[param.in] = form[param.in] || {};
                 form[param.in][param.name] = value;
                 break;
-            case 'header':
-            case 'headers':
+            case "header":
+            case "headers":
                 form.headers = form.headers || {};
                 form.headers[param.name] = value;
                 break;
