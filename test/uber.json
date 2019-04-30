@@ -97,9 +97,14 @@
           "200": {
             "description": "An array of price estimates by product",
             "schema": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/PriceEstimate"
+              "type": "object",
+              "properties": {
+                "estimates": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/PriceEstimate"
+                  }
+                }
               }
             }
           },

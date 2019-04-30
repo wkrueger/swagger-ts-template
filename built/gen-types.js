@@ -22,7 +22,7 @@ function genTypes(swaggerDoc, opts = {}) {
         const originalFilename = opts.filename;
         const mapVariableName = opts.mapVariableName || (s => s);
         opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts";
-        __definitionRoot = opts.searchWithin || "definitions";
+        __definitionRoot = "definitions";
         __mainDoc = swaggerDoc;
         var out = "";
         let external = opts.external ? "export " : "";

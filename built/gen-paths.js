@@ -21,6 +21,7 @@ function genPaths(swaggerDoc, opts) {
         if (!opts.output)
             throw Error("Missing parameter: output.");
         opts.moduleStyle = opts.moduleStyle || "commonjs";
+        preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
@@ -148,6 +149,20 @@ function genPaths(swaggerDoc, opts) {
                 out += "\n";
             out += "}";
             return out;
+        }
+        function preNormalize() {
+            Object.keys(swaggerDoc.paths).forEach(pathKey => {
+                const path = swaggerDoc.paths[pathKey];
+                Object.keys(path).forEach(opKey => {
+                    const operation = path[opKey];
+                    let find = _.get(operation, ["responses", "200", "schema"]);
+                    if (find && !find.$ref) {
+                        const tempTypeName = "__" + operation.operationId + "__response";
+                        swaggerDoc.definitions[tempTypeName] = Object.assign({}, find);
+                        find.$ref = tempTypeName;
+                    }
+                });
+            });
         }
         function responseType(operation) {
             let find = _.get(operation, ["responses", "200", "schema"]);

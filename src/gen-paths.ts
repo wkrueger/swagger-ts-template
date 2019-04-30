@@ -19,6 +19,7 @@ type genPathsOpts = {
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   if (!opts.output) throw Error("Missing parameter: output.")
   opts.moduleStyle = opts.moduleStyle || "commonjs"
+  preNormalize()
 
   await promisify(rimraf)(opts.output)
   await promisify(mkdirp as any)(path.resolve(opts.output, "modules"))
@@ -150,6 +151,21 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     if (count) out += "\n"
     out += "}"
     return out
+  }
+
+  function preNormalize() {
+    Object.keys(swaggerDoc.paths).forEach(pathKey => {
+      const path = swaggerDoc.paths[pathKey]
+      Object.keys(path).forEach(opKey => {
+        const operation = path[opKey]
+        let find: any = _.get(operation, ["responses", "200", "schema"])
+        if (find && !find.$ref) {
+          const tempTypeName = "__" + operation.operationId + "__response"
+          swaggerDoc.definitions![tempTypeName] = { ...find }
+          find.$ref = tempTypeName
+        }
+      })
+    })
   }
 
   function responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {

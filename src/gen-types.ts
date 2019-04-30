@@ -15,7 +15,7 @@ export interface genTypesOpts {
   filename?: string
   hideComments?: boolean
   //search for type definitions in the following path (currently only 1 item)
-  searchWithin?: string
+  //searchWithin?: string
   noOptionals?: boolean
   mapVariableName?: (s: string) => string
 }
@@ -25,7 +25,7 @@ export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) 
   const originalFilename = opts.filename
   const mapVariableName = opts.mapVariableName || (s => s)
   opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts"
-  __definitionRoot = opts.searchWithin || "definitions"
+  __definitionRoot = "definitions"
 
   __mainDoc = swaggerDoc
   var out = ""
