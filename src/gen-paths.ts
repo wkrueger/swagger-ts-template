@@ -158,7 +158,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       const path = swaggerDoc.paths[pathKey]
       Object.keys(path).forEach(opKey => {
         const operation = path[opKey]
-        let find: any = _.get(operation, ["responses", "200", "schema"])
+        let find = findResponseSchema(operation)
         if (find && !find.$ref) {
           const tempTypeName = "__" + operation.operationId + "__response"
           swaggerDoc.definitions![tempTypeName] = { ...find }
@@ -168,8 +168,14 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     })
   }
 
+  function findResponseSchema(operation) {
+    let find: any = _.get(operation, ["responses", "201", "schema"])
+    if (!find) find = _.get(operation, ["responses", "200", "schema"])
+    return find
+  }
+
   function responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
-    let find: any = _.get(operation, ["responses", "200", "schema"])
+    let find = findResponseSchema(operation)
     if (!find) return "void"
     if (find.type === "array") {
       if (!_.get(find, ["items", "$ref"])) return "any[]"

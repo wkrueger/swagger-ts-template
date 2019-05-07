@@ -155,7 +155,7 @@ function genPaths(swaggerDoc, opts) {
                 const path = swaggerDoc.paths[pathKey];
                 Object.keys(path).forEach(opKey => {
                     const operation = path[opKey];
-                    let find = _.get(operation, ["responses", "200", "schema"]);
+                    let find = findResponseSchema(operation);
                     if (find && !find.$ref) {
                         const tempTypeName = "__" + operation.operationId + "__response";
                         swaggerDoc.definitions[tempTypeName] = Object.assign({}, find);
@@ -164,8 +164,14 @@ function genPaths(swaggerDoc, opts) {
                 });
             });
         }
+        function findResponseSchema(operation) {
+            let find = _.get(operation, ["responses", "201", "schema"]);
+            if (!find)
+                find = _.get(operation, ["responses", "200", "schema"]);
+            return find;
+        }
         function responseType(operation) {
-            let find = _.get(operation, ["responses", "200", "schema"]);
+            let find = findResponseSchema(operation);
             if (!find)
                 return "void";
             if (find.type === "array") {
