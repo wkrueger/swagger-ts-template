@@ -8,7 +8,8 @@ declare global {
 
 export type RequestHandler_t<T> = (
   payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts,
-  data: any
+  data: any,
+  operation: Operation_t
 ) => Promise<T>
 
 export interface ReqHandlerPayload_t {
@@ -20,6 +21,7 @@ export interface ReqHandlerPayload_t {
 }
 
 export interface Operation_t {
+  id: string
   path: string
   verb: string
   parameters: {
@@ -81,5 +83,5 @@ export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPaylo
 export const requestMaker: RequestMaker_t = operation => (data: any) => {
   let _data = { ...data }
   let payload = paramBuilder(operation, _data)
-  return __reqHandler(payload as any, _data)
+  return __reqHandler(payload as any, _data, operation)
 }
