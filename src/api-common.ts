@@ -1,13 +1,13 @@
 declare global {
   namespace GApiCommon {
     //for declaration augmenting
-    interface RequestHandlerOpts {}
+    interface MergeToRequest {}
     interface MergeToResponse {}
   }
 }
 
 export type RequestHandler_t<T> = (
-  payload: ReqHandlerPayload_t & GApiCommon.RequestHandlerOpts,
+  payload: ReqHandlerPayload_t & GApiCommon.MergeToRequest,
   data: any,
   operation: Operation_t
 ) => Promise<T>
@@ -33,9 +33,7 @@ export interface Operation_t {
 
 export type RequestMaker_t = <Params, Response>(
   o: Operation_t
-) => (
-  params: Params & GApiCommon.RequestHandlerOpts
-) => Promise<Response & GApiCommon.MergeToResponse>
+) => (params: Params & GApiCommon.MergeToRequest) => Promise<Response & GApiCommon.MergeToResponse>
 
 export class SwaggerRequester {
   paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
