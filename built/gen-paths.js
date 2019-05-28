@@ -252,8 +252,8 @@ export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
 export const <%=operation.operationId%>
     = ApiCommon.requestMaker
     <<%=operation.operationId%>_Type, <%=responseType(operation)%> >({
-        id: '<%=operation.operationId%>'
-        path: '<%=operation.__path__%>' ,
+        id: '<%=operation.operationId%>',
+        path: '<%=operation.__path__%>',
         verb: '<%=String(operation.__verb__).toUpperCase()%>',
         parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
     })
