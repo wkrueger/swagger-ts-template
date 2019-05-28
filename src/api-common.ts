@@ -37,51 +37,53 @@ export type RequestMaker_t = <Params, Response>(
   params: Params & GApiCommon.RequestHandlerOpts
 ) => Promise<Response & GApiCommon.MergeToResponse>
 
-let __reqHandler: RequestHandler_t<any> = async () => {
-  throw Error("Please define a requestHandler.")
-}
-
-export const setRequestHandler: (handler: RequestHandler_t<any>) => void = handler => {
-  __reqHandler = handler
-}
-
-export function paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
-  let form = {
-    verb: String(operation.verb).toUpperCase(),
-    url: operation.path,
-    query: {} as any,
-    body: {} as any,
-    headers: {} as any
-  }
-  operation.parameters.forEach(param => {
-    let value = data[param.name]
-    if (!value) return
-    switch (param.in) {
-      case "path":
-        let rgx = new RegExp("{" + param.name + "}")
-        form.url = form.url.replace(rgx, encodeURIComponent(value))
-        break
-      case "body":
-        form.body = value
-        break
-      //leave encoding to the sender fn
-      case "query":
-        form[param.in] = form[param.in] || {}
-        form[param.in][param.name] = value
-        break
-      case "header":
-      case "headers":
-        form.headers = form.headers || {}
-        form.headers[param.name] = value
-        break
+export class SwaggerRequester {
+  paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
+    let form = {
+      verb: String(operation.verb).toUpperCase(),
+      url: operation.path,
+      query: {} as any,
+      body: {} as any,
+      headers: {} as any
     }
-  })
+    operation.parameters.forEach(param => {
+      let value = data[param.name]
+      if (!value) return
+      switch (param.in) {
+        case "path":
+          let rgx = new RegExp("{" + param.name + "}")
+          form.url = form.url.replace(rgx, encodeURIComponent(value))
+          break
+        case "body":
+          form.body = value
+          break
+        //leave encoding to the sender fn
+        case "query":
+          form[param.in] = form[param.in] || {}
+          form[param.in][param.name] = value
+          break
+        case "header":
+        case "headers":
+          form.headers = form.headers || {}
+          form.headers[param.name] = value
+          break
+      }
+    })
+    return form
+  }
 
-  return form
+  handler: RequestHandler_t<any> = async () => {
+    throw Error("Please define a requestHandler.")
+  }
+
+  setRequestHandler(handler: RequestHandler_t<any>) {
+    this.handler = handler
+  }
 }
+export let requester = new SwaggerRequester()
 
 export const requestMaker: RequestMaker_t = operation => (data: any) => {
   let _data = { ...data }
-  let payload = paramBuilder(operation, _data)
-  return __reqHandler(payload as any, _data, operation)
+  let payload = requester.paramBuilder(operation, _data)
+  return requester.handler(payload as any, _data, operation)
 }
