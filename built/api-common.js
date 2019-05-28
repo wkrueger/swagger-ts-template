@@ -15,7 +15,7 @@ class SwaggerRequester {
         });
     }
     paramBuilder(operation, data) {
-        let form = {
+        const form = {
             verb: String(operation.verb).toUpperCase(),
             url: operation.path,
             query: {},
@@ -23,12 +23,12 @@ class SwaggerRequester {
             headers: {}
         };
         operation.parameters.forEach(param => {
-            let value = data[param.name];
+            const value = data[param.name];
             if (!value)
                 return;
             switch (param.in) {
                 case "path":
-                    let rgx = new RegExp("{" + param.name + "}");
+                    const rgx = new RegExp("{" + param.name + "}");
                     form.url = form.url.replace(rgx, encodeURIComponent(value));
                     break;
                 case "body":
@@ -48,15 +48,17 @@ class SwaggerRequester {
         });
         return form;
     }
-    setRequestHandler(handler) {
-        this.handler = handler;
-    }
 }
 exports.SwaggerRequester = SwaggerRequester;
-exports.requester = new SwaggerRequester();
+exports.settings = {
+    getRequester() {
+        return new SwaggerRequester();
+    }
+};
 exports.requestMaker = operation => (data) => {
-    let _data = Object.assign({}, data);
-    let payload = exports.requester.paramBuilder(operation, _data);
-    return exports.requester.handler(payload, _data, operation);
+    const _data = Object.assign({}, data);
+    const requester = exports.settings.getRequester();
+    const payload = requester.paramBuilder(operation, _data);
+    return requester.handler(payload, _data, operation);
 };
 //# sourceMappingURL=api-common.js.map

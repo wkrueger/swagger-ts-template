@@ -39,7 +39,7 @@ export type RequestMaker_t = <Params, Response>(
 
 export class SwaggerRequester {
   paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t {
-    let form = {
+    const form = {
       verb: String(operation.verb).toUpperCase(),
       url: operation.path,
       query: {} as any,
@@ -47,11 +47,11 @@ export class SwaggerRequester {
       headers: {} as any
     }
     operation.parameters.forEach(param => {
-      let value = data[param.name]
+      const value = data[param.name]
       if (!value) return
       switch (param.in) {
         case "path":
-          let rgx = new RegExp("{" + param.name + "}")
+          const rgx = new RegExp("{" + param.name + "}")
           form.url = form.url.replace(rgx, encodeURIComponent(value))
           break
         case "body":
@@ -75,15 +75,17 @@ export class SwaggerRequester {
   handler: RequestHandler_t<any> = async () => {
     throw Error("Please define a requestHandler.")
   }
+}
 
-  setRequestHandler(handler: RequestHandler_t<any>) {
-    this.handler = handler
+export const settings = {
+  getRequester() {
+    return new SwaggerRequester()
   }
 }
-export let requester = new SwaggerRequester()
 
 export const requestMaker: RequestMaker_t = operation => (data: any) => {
-  let _data = { ...data }
-  let payload = requester.paramBuilder(operation, _data)
+  const _data = { ...data }
+  const requester = settings.getRequester()
+  const payload = requester.paramBuilder(operation, _data)
   return requester.handler(payload as any, _data, operation)
 }
