@@ -23,48 +23,77 @@ generator.genPaths(swaggerFile, { output: "./api" }).then(() => console.log("oka
 
 ## genTypes options
 
-- **hideComments**: If true, properties descriptions will not be included
-  as comments in the generated file.
-- **external**: Formats the types as `export type`, making the file an
-  external module.
-- **mapVariableName**: Optionally privide a function to rename types.
+```ts
+export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {})
+
+export interface genTypesOpts {
+  external?: any
+  filename?: string
+  hideComments?: boolean
+  //search for type definitions in the following path (currently only 1 item)
+  //searchWithin?: string
+  noOptionals?: boolean
+  mapVariableName?: (s: string) => string
+}
+```
 
 ## genPaths options
 
-- **output** point to a folder
-- **typesOpts** passed to `genTypes`
+```ts
+export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts)
 
-You must `operationId` and `tags` on your routes.
+type genPathsOpts = {
+  output: string
+  moduleStyle: "commonjs" | "esm"
+  failOnMissingOperationId?: boolean
+  typesOpts?: genTypesOpts
+}
+```
+
+You MUST supply `operationId` and `tags` on your routes. Most frameworks swagger generators
+should already have that sorted.
 
 ## Consumer API example
 
 ```typescript
 //you have to bootstrap the api skeleton telling what to use to do the requests
 //this setting is global and must be run before the 1st request takes place
-import ApiCommon = require("./api/api-common")
-ApiCommon.setRequestHandler(req => {
-  //...
-})
 
-//modules are split by tag. Although you can still use es6 modules
-//+ tree shaker to shorten the syntax, we dont rely on that
+import { SwaggerRequester, settings as swaggerSettings } from "swagger-ts-template"
+
+class MyRequester extends SwaggerRequester {
+  handler: RequestHandler_t<any> = async request => {
+    const opts = request.options || {}
+    const resp = await this.request(
+      request.verb as any,
+      request.url,
+      request.query,
+      request.body,
+      opts
+    )
+    return resp || {}
+  }
+}
+
+const myRequester = new MyRequester()
+swaggerSettings.getRequester = () => myRequester
+
+//module files are split by tag
 import CustomerApi = require("./api/modules/Customer")
 
 //the functions are named after the "operationId" property
+//the parameters are joined into a single object
+//whether they are in query, body or header
 let customer = await CustomerApi.getCustomer({
-  //the parameters are joined into a single object
-  //whether they are in query, body or header
   customerId: 999
 })
 
 declare global {
   namespace GApiCommon {
     //you may extend the input object in order to expose or require
-    //properties to be consumed (for instance) by the request maker function
+    //properties to be consumed by the request maker function
     interface RequestHandlerOpts {
       _allowCache: true
-      //now TS will point "_allowCache" is missing in the
-      //request made above
     }
 
     //you may declare properties which are available on every response
