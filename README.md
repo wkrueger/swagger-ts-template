@@ -24,15 +24,12 @@ generator.genPaths(swaggerFile, { output: "./api" }).then(() => console.log("oka
 ## genTypes options
 
 ```ts
-export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {})
+export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}): Promise<string>
 
 export interface genTypesOpts {
-  external?: any
+  external?: any //if false, declares types globally
   filename?: string
   hideComments?: boolean
-  //search for type definitions in the following path (currently only 1 item)
-  //searchWithin?: string
-  noOptionals?: boolean
   mapVariableName?: (s: string) => string
 }
 ```
@@ -40,10 +37,10 @@ export interface genTypesOpts {
 ## genPaths options
 
 ```ts
-export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts)
+export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>
 
 type genPathsOpts = {
-  output: string
+  output: string //output folder path
   moduleStyle: "commonjs" | "esm"
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
