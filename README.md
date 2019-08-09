@@ -15,26 +15,35 @@ Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 var generator = require("swagger-ts-template")
 var swaggerFile = require("./api.json")
 
+// usage 1: only get the type definitions, saves to a string
 let output = generator.genTypes(swaggerFile, { hideComments: true })
 fs.writeFileSync("api.d.ts", output)
 
+// usage 2: generates TS api consumer, saves to folder
 generator.genPaths(swaggerFile, { output: "./api" }).then(() => console.log("okay"))
 ```
 
-## genTypes options
+## genTypes
+
+Skims the "declarations" key, generating a single `.d.ts` file.
 
 ```ts
 export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}): Promise<string>
 
 export interface genTypesOpts {
-  external?: any //if false, declares types globally
-  filename?: string
+  // true: generate a module (use export), false: declare types globally
+  external?: any
   hideComments?: boolean
+  // optionally rename variables, may be used to fix issues
   mapVariableName?: (s: string) => string
 }
 ```
 
 ## genPaths options
+
+Generates a typed API consumer on a defined folder. `genTypes` is already included.
+
+OBS: Routes must have "operationId" defined, since this is used to name the function.
 
 ```ts
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>
@@ -44,6 +53,7 @@ type genPathsOpts = {
   moduleStyle: "commonjs" | "esm"
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
+  mapOperation?: (o: Operation) => Operation
 }
 ```
 

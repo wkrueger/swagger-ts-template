@@ -8,12 +8,14 @@ import path = require("path")
 import { promisify } from "util"
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
+type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation
 
 type genPathsOpts = {
   output: string
   moduleStyle: "commonjs" | "esm"
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
+  mapOperation?: (operation: Operation) => Operation
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
@@ -100,6 +102,9 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   tags = _.mapValues(tags, value => {
     let uniq = {}
     value.forEach(v => {
+      if (opts.mapOperation) {
+        v = opts.mapOperation(v)
+      }
       if (!v.operationId) {
         if (opts.failOnMissingOperationId) {
           throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
