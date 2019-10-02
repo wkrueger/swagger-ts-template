@@ -94,9 +94,6 @@ function genPaths(swaggerDoc, opts) {
         tags = _.mapValues(tags, value => {
             let uniq = {};
             value.forEach(v => {
-                if (opts.mapOperation) {
-                    v = opts.mapOperation(v);
-                }
                 if (!v.operationId) {
                     if (opts.failOnMissingOperationId) {
                         throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
@@ -157,6 +154,11 @@ function genPaths(swaggerDoc, opts) {
             Object.keys(swaggerDoc.paths).forEach(pathKey => {
                 const path = swaggerDoc.paths[pathKey];
                 Object.keys(path).forEach(opKey => {
+                    if (opKey === "parameters")
+                        return;
+                    if (opts.mapOperation) {
+                        path[opKey] = opts.mapOperation(path[opKey]);
+                    }
                     const operation = path[opKey];
                     let find = findResponseSchema(operation);
                     if (find && !find.$ref) {
