@@ -111,7 +111,7 @@ export type getPriceEstimates_Type = {
 }
 export const getPriceEstimates
     = ApiCommon.requestMaker
-    <getPriceEstimates_Type, Types.getPriceEstimates__Response >({
+    <getPriceEstimates_Type, Types.getPriceEstimates_Response >({
         id: 'getPriceEstimates',
         path: '/estimates/price',
         verb: 'GET',
