@@ -68,10 +68,10 @@ You have to bootstrap the api skeleton telling how should you run the requests.
 This setting is global and must be run before the 1st request takes place.
 
 ```typescript
-import { SwaggerRequester, settings as swaggerSettings } from "swagger-ts-template"
+import { SwaggerRequester, settings as swaggerSettings, IRequest } from "./swagger/api-common"
 
 class MyRequester extends SwaggerRequester {
-  handler: RequestHandler_t<any> = async request => {
+  handler(request: IRequest) {
     const opts = request.options || {}
     const resp = await doTheRequest(
       request.verb as any,
