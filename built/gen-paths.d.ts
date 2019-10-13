@@ -7,6 +7,7 @@ declare type genPathsOpts = {
     failOnMissingOperationId?: boolean;
     typesOpts?: genTypesOpts;
     mapOperation?: (operation: Operation) => Operation;
+    templateString?: string;
 };
 export declare function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>;
 export {};

@@ -16,11 +16,14 @@ type genPathsOpts = {
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
   mapOperation?: (operation: Operation) => Operation
+  templateString?: string
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   if (!opts.output) throw Error("Missing parameter: output.")
   opts.moduleStyle = opts.moduleStyle || "commonjs"
+  opts.templateString = opts.templateString || defaultTemplateStr
+  const compiledTemplate = _.template(opts.templateString)
   preNormalize()
 
   await promisify(rimraf)(opts.output)
@@ -201,7 +204,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   await _.toPairs(tags).reduce(async (chain, [tag, operations]) => {
     await chain
     __usesTypes = false
-    let merged = compiled({
+    let merged = compiledTemplate({
       operations,
       paramsType,
       responseType,
@@ -255,7 +258,7 @@ function getImportString(i: { variable: string; module: string; style: "commonjs
   }
 }
 
-let templateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
+const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
@@ -271,5 +274,3 @@ export const <%=operation.operationId%>
 
 <% }) %>
 `
-
-let compiled = _.template(templateStr)

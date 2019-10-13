@@ -1,21 +1,8 @@
 "use strict";
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 class SwaggerRequester {
-    constructor() {
-        this.handler = () => __awaiter(this, void 0, void 0, function* () {
-            throw Error("Please define a requestHandler.");
-        });
-    }
     paramBuilder(operation, data) {
-        const form = {
+        const request = {
             verb: String(operation.verb).toUpperCase(),
             url: operation.path,
             query: {},
@@ -29,36 +16,36 @@ class SwaggerRequester {
             switch (param.in) {
                 case "path":
                     const rgx = new RegExp("{" + param.name + "}");
-                    form.url = form.url.replace(rgx, encodeURIComponent(value));
+                    request.url = request.url.replace(rgx, encodeURIComponent(value));
                     break;
                 case "body":
-                    form.body = value;
+                    request.body = value;
                     break;
                 //leave encoding to the sender fn
                 case "query":
-                    form[param.in] = form[param.in] || {};
-                    form[param.in][param.name] = value;
+                    request[param.in] = request[param.in] || {};
+                    request[param.in][param.name] = value;
                     break;
                 case "header":
                 case "headers":
-                    form.headers = form.headers || {};
-                    form.headers[param.name] = value;
+                    request.headers = request.headers || {};
+                    request.headers[param.name] = value;
                     break;
             }
         });
-        return form;
+        return request;
     }
 }
 exports.SwaggerRequester = SwaggerRequester;
 exports.settings = {
     getRequester() {
-        return new SwaggerRequester();
+        throw new Error("Define a SwaggerRequester.");
     }
 };
-exports.requestMaker = operation => (data) => {
-    const _data = Object.assign({}, data);
+exports.requestMaker = (operation) => (_input) => {
+    const input = Object.assign({}, _input);
     const requester = exports.settings.getRequester();
-    const payload = requester.paramBuilder(operation, _data);
-    return requester.handler(payload, _data, operation);
+    const request = requester.paramBuilder(operation, input);
+    return requester.handler(request, input, operation);
 };
 //# sourceMappingURL=api-common.js.map

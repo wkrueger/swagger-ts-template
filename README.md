@@ -11,6 +11,8 @@ Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
    types to the table.
    - `genPaths` generates an (opinionated) rest API consumer
 
+**USAGE 2 is what you will usually be doing.**
+
 ```javascript
 var generator = require("swagger-ts-template")
 var swaggerFile = require("./api.json")
@@ -43,8 +45,6 @@ export interface genTypesOpts {
 
 Generates a typed API consumer on a defined folder. `genTypes` is already included.
 
-OBS: Routes must have "operationId" defined, since this is used to name the function.
-
 ```ts
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>
 
@@ -54,24 +54,26 @@ type genPathsOpts = {
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
   mapOperation?: (o: Operation) => Operation
+  templateString?: string
 }
 ```
 
-You MUST supply `operationId` and `tags` on your routes. Most frameworks swagger generators
-should already have that sorted.
+**You MUST supply `operationId` and `tags` on your routes. Most frameworks swagger generators
+should already have that sorted.**
 
-## Consumer API example
+## Setting up the consumer API
+
+You have to bootstrap the api skeleton telling how should you run the requests.
+
+This setting is global and must be run before the 1st request takes place.
 
 ```typescript
-//you have to bootstrap the api skeleton telling what to use to do the requests
-//this setting is global and must be run before the 1st request takes place
-
 import { SwaggerRequester, settings as swaggerSettings } from "swagger-ts-template"
 
 class MyRequester extends SwaggerRequester {
   handler: RequestHandler_t<any> = async request => {
     const opts = request.options || {}
-    const resp = await this.request(
+    const resp = await doTheRequest(
       request.verb as any,
       request.url,
       request.query,
@@ -84,26 +86,65 @@ class MyRequester extends SwaggerRequester {
 
 const myRequester = new MyRequester()
 swaggerSettings.getRequester = () => myRequester
+```
 
-//module files are split by tag
+## Generated consumer API
+
+  - All declared types are exported as `interface`'s or type aliases when necessary;
+  - "Anonymous" types (actually, the request and response types)
+    will also get an interface for them, with a generated name (if they are not already present in "declarations");
+  - Methods are grouped in files by their tag and named by their operationId;
+  - The transport is abstracted away. All inputs are passed by their names, there is no distiction whether they are in the path, query parameters or body; The method declarations carry the necessary metadata to achieve this.
+
+Sample generated file excerpt:
+
+```ts
+import * as Types from '../api-types'
+import * as ApiCommon from '../api-common'
+
+
+export type getPriceEstimates_Type = {
+    'end_latitude' : number
+    'end_longitude' : number
+    'start_latitude' : number
+    'start_longitude' : number
+}
+export const getPriceEstimates
+    = ApiCommon.requestMaker
+    <getPriceEstimates_Type, Types.getPriceEstimates__Response >({
+        id: 'getPriceEstimates',
+        path: '/estimates/price',
+        verb: 'GET',
+        parameters: [{"name":"end_latitude","required":true,"in":"query"},{"name":"end_longitude","required":true,"in":"query"},{"name":"start_latitude","required":true,"in":"query"},{"name":"start_longitude","required":true,"in":"query"}]
+    })
+
+///...
+```
+
+Sample consumer invocation:
+
+```ts
 import CustomerApi = require("./api/modules/Customer")
-
-//the functions are named after the "operationId" property
-//the parameters are joined into a single object
-//whether they are in query, body or header
 let customer = await CustomerApi.getCustomer({
   customerId: 999
 })
+```
 
+See also the `samples` path in this repo.
+
+## Personalization
+
+  - The input parameters from `genPaths` may be used to tweak the generation a bit;
+  - You can extend the request and response types by augmenting either
+`GApiCommon#MergeToRequest` or `GApiCommon#MergeToResponse` global interfaces.
+
+```ts
 declare global {
   namespace GApiCommon {
-    //you may extend the input object in order to expose or require
-    //properties to be consumed by the request maker function
-    interface RequestHandlerOpts {
+    interface MergeToRequest {
       _allowCache: true
     }
 
-    //you may declare properties which are available on every response
     interface MergeToResponse {
       page: number
       numPages: number

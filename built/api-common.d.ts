@@ -6,15 +6,14 @@ declare global {
         }
     }
 }
-export declare type RequestHandler_t<T> = (payload: ReqHandlerPayload_t & GApiCommon.MergeToRequest, data: any, operation: Operation_t) => Promise<T>;
-export interface ReqHandlerPayload_t {
+export interface IRequest {
     verb?: string;
     url: string;
     query?: any;
     body?: any;
     headers?: any;
 }
-export interface Operation_t {
+export interface IOperation {
     id: string;
     path: string;
     verb: string;
@@ -24,12 +23,15 @@ export interface Operation_t {
         required?: boolean;
     }[];
 }
-export declare type RequestMaker_t = <Params, Response>(o: Operation_t) => (params: Params & GApiCommon.MergeToRequest) => Promise<Response & GApiCommon.MergeToResponse>;
-export declare class SwaggerRequester {
-    paramBuilder(operation: Operation_t, data: any): ReqHandlerPayload_t;
-    handler: RequestHandler_t<any>;
+export declare abstract class SwaggerRequester {
+    paramBuilder(operation: IOperation, data: any): IRequest;
+    /**
+     * Override to return API Response + Common extra fields
+     * (Response + GApiCommon.MergeToResponse)
+     */
+    abstract handler(request: IRequest & GApiCommon.MergeToRequest, input: Record<string, any>, operation: IOperation): Promise<any>;
 }
 export declare const settings: {
     getRequester(): SwaggerRequester;
 };
-export declare const requestMaker: RequestMaker_t;
+export declare const requestMaker: <Input, Response_1>(operation: IOperation) => (_input: Input & GApiCommon.MergeToRequest) => Promise<Response_1 & GApiCommon.MergeToResponse>;

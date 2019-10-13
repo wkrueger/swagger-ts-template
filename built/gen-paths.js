@@ -21,6 +21,8 @@ function genPaths(swaggerDoc, opts) {
         if (!opts.output)
             throw Error("Missing parameter: output.");
         opts.moduleStyle = opts.moduleStyle || "commonjs";
+        opts.templateString = opts.templateString || defaultTemplateStr;
+        const compiledTemplate = _.template(opts.templateString);
         preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
@@ -199,7 +201,7 @@ function genPaths(swaggerDoc, opts) {
         yield _.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
             yield chain;
             __usesTypes = false;
-            let merged = compiled({
+            let merged = compiledTemplate({
                 operations,
                 paramsType,
                 responseType,
@@ -250,7 +252,7 @@ function getImportString(i) {
         return `import * as ${i.variable} from '${i.module}'`;
     }
 }
-let templateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
+const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
@@ -266,5 +268,4 @@ export const <%=operation.operationId%>
 
 <% }) %>
 `;
-let compiled = _.template(templateStr);
 //# sourceMappingURL=gen-paths.js.map
