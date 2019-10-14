@@ -1,12 +1,12 @@
 # swagger-ts-template
 
-Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
-
 This fork's npm package:
 
 ```
 yarn add @proerd/swagger-ts-template
 ```
+
+Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 
 1. Generates a `d.ts` file containing the type definitions from
    a swagger `.json` file.
