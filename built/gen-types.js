@@ -21,6 +21,7 @@ function genTypes(swaggerDoc, opts = {}) {
         //TODO use prettier
         const originalFilename = opts.filename;
         const mapVariableName = opts.mapVariableName || (s => s);
+        const fixVariableName = (s) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
         opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts";
         __definitionRoot = "definitions";
         __mainDoc = swaggerDoc;
@@ -42,9 +43,8 @@ function genTypes(swaggerDoc, opts = {}) {
             return i2.name - i1.name;
         });
         list.forEach(item => {
-            //if (name !== 'PurchaseHeaderIn') continue
             let def = item.def;
-            let templ = typeTemplate(def, true);
+            let templ = typeTemplate(def, item.name, true);
             let isInterface = ["object", "allOf", "anyOf"].indexOf(templ.type) !== -1;
             let keyword = isInterface ? "interface" : "type";
             let equals = isInterface ? "" : " = ";
@@ -53,12 +53,11 @@ function genTypes(swaggerDoc, opts = {}) {
                 extend = "extends" + " " + (templ.extends || []).join(",");
             }
             out += `
-        ${external}${keyword} ${mapVariableName(item.name)} ${extend}  ${equals}
+        ${external}${keyword} ${fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}
         ${templ.data.join("\n")}
         
         `;
         });
-        //console.log('dest', opts.filename)
         let result = yield formatter.processString(opts.filename, out, {
             editorconfig: false,
             replace: true,
@@ -75,12 +74,18 @@ function genTypes(swaggerDoc, opts = {}) {
         if (!originalFilename)
             yield util_1.promisify(fs.unlink)(opts.filename);
         return result.dest;
-        function typeTemplate(swaggerType, embraceObjects = false) {
+        function typeTemplate(swaggerType, path, embraceObjects = false) {
             function wrap() {
                 if (swaggerType.$ref) {
-                    let split = swaggerType.$ref.split("/");
+                    const split = swaggerType.$ref.split("/");
+                    let variableName = split[split.length - 1];
+                    const validJsCheck = fixVariableName(variableName);
+                    if (validJsCheck !== variableName) {
+                        console.error("Strange variable name at " + path + " , reverting to any.");
+                        return { type: "primitive", data: ["any"] };
+                    }
                     return {
-                        data: [split[split.length - 1]],
+                        data: [variableName],
                         type: "ref"
                     };
                 }
@@ -99,16 +104,16 @@ function genTypes(swaggerDoc, opts = {}) {
                 if (~["integer", "double", "number"].indexOf(swaggerType.type)) {
                     return { data: ["number"], type: "primitive" };
                 }
-                if (~["string", "boolean"].indexOf(swaggerType.type)) {
+                if (~["string", "boolean", "null"].indexOf(swaggerType.type)) {
                     return { data: [swaggerType.type], type: "primitive" };
                 }
                 if (swaggerType.type === "object" || swaggerType.properties) {
                     let aux = _.toPairs(swaggerType.properties).map(pair => {
                         var [key, prop] = pair;
-                        let current = typeTemplate(prop, true).data;
+                        let current = typeTemplate(prop, path + "." + key, true).data;
                         let required = swaggerType.required && swaggerType.required.indexOf(key) != -1 ? "" : "?";
-                        if (opts.noOptionals)
-                            required = "";
+                        if (fixVariableName(key) !== key)
+                            key = fixVariableName(key);
                         current[0] = `${key}${required} : ${mapVariableName(current[0].trim())}`;
                         if (prop.description && !opts.hideComments) {
                             var doc = [
@@ -136,14 +141,17 @@ function genTypes(swaggerDoc, opts = {}) {
                     return { data: joined, type: "object" };
                 }
                 if (swaggerType.type === "array" || swaggerType.items) {
-                    let inner = typeTemplate(swaggerType.items, true).data;
+                    let inner = typeTemplate(swaggerType.items, path + "[]", true).data;
                     inner[inner.length - 1] += "[]";
                     return { data: inner, type: "array" };
+                }
+                if (Array.isArray(swaggerType.type)) {
+                    return { data: [swaggerType.type.join("|")], type: "union" };
                 }
                 if (swaggerType.allOf) {
                     let merged = mergeAllof(swaggerType);
                     return {
-                        data: ["{", ...typeTemplate(merged.swaggerDoc).data, "}"],
+                        data: ["{", ...typeTemplate(merged.swaggerDoc, path + ".ALLOF").data, "}"],
                         type: "allOf",
                         extends: merged.extends
                     };
@@ -152,12 +160,16 @@ function genTypes(swaggerDoc, opts = {}) {
                     //typedef says anyOf does not belong to swagger Schema
                     let merged = mergeAllof(swaggerType, "anyOf");
                     return {
-                        data: ["{", ...typeTemplate(merged.swaggerDoc).data, "}"],
+                        data: ["{", ...typeTemplate(merged.swaggerDoc, path + ".ANYOF").data, "}"],
                         type: "anyOf",
                         extends: merged.extends
                     };
                 }
-                throw swaggerType.type;
+                console.error("Unhandled type at " + path, swaggerType);
+                return {
+                    type: "primitive",
+                    data: ["any"]
+                };
             }
             let out = wrap();
             return {
