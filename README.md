@@ -1,11 +1,17 @@
 # swagger-ts-template
 
+This fork's npm package:
+
+```
+yarn add @proerd/swagger-ts-template
+```
+
 Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 
 1. Generates a `d.ts` file containing the type definitions from
    a swagger `.json` file.
 
-   - `genTypes` generates a single .d.ts file with typedefs (no class BS!)
+   - `genTypes` generates a single .d.ts file with typedefs (interfaces and type aliases only)
 
 2. Generates an (opinionated) typescript consumer API, focused on bringing
    types to the table.
