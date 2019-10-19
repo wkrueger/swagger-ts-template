@@ -11,13 +11,10 @@ Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 1. Generates a `d.ts` file containing the type definitions from
    a swagger `.json` file.
 
-   - `genTypes` generates a single .d.ts file with typedefs (interfaces and type aliases only)
-
 2. Generates an (opinionated) typescript consumer API, focused on bringing
    types to the table.
-   - `genPaths` generates an (opinionated) rest API consumer
-
-**USAGE 2 is what you will usually be doing.**
+   
+**USAGE 2 is what you will usually be doing.**   
 
 ```javascript
 var generator = require("swagger-ts-template")
@@ -30,6 +27,15 @@ fs.writeFileSync("api.d.ts", output)
 // usage 2: generates TS api consumer, saves to folder
 generator.genPaths(swaggerFile, { output: "./api" }).then(() => console.log("okay"))
 ```
+   
+## What's different on this one?
+
+This has been serving me great for a couple of years.
+
+  - The scaffold gives almost no opinion on how should you do your requests. Receive the processed
+  playload, do the request with whatever fetch or axios or any other thing, return a response or throw an error;
+  - The default "payload processing" is also easily extensible;
+  - You can add extra input or output arguments through interface augmenting, which works fine for covering special cases;
 
 ## genTypes
 
@@ -140,7 +146,7 @@ See also the `samples` path in this repo.
 
 ## Personalization
 
-  - The input parameters from `genPaths` may be used to tweak the generation a bit;
+  - The input parameters from `genPaths` may be used to tweak the generation a bit; Most notably, you can remap the operation objects to do things such as renaming methods;
   - You can extend the request and response types by augmenting either
 `GApiCommon#MergeToRequest` or `GApiCommon#MergeToResponse` global interfaces.
 
