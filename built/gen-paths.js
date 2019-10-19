@@ -22,6 +22,7 @@ function genPaths(swaggerDoc, opts) {
             throw Error("Missing parameter: output.");
         opts.moduleStyle = opts.moduleStyle || "commonjs";
         opts.templateString = opts.templateString || defaultTemplateStr;
+        opts.mapOperation = opts.mapOperation || defaultMapOperation;
         const compiledTemplate = _.template(opts.templateString);
         preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
@@ -114,6 +115,8 @@ function genPaths(swaggerDoc, opts) {
         function convertType(type) {
             if (type === "integer")
                 return "number";
+            if (typeof type === "string")
+                return type;
             if (type.$ref) {
                 return refName(type);
             }
@@ -184,18 +187,16 @@ function genPaths(swaggerDoc, opts) {
             if (find.type === "array") {
                 if (!_.get(find, ["items", "$ref"]))
                     return "any[]";
-                let typeNameSplit = find.items.$ref.split("/");
-                let typeName = typeNameSplit[typeNameSplit.length - 1];
+                let typeName = refName(find.items);
                 __usesTypes = true;
-                return `Types.${typeName}[]`;
+                return `${typeName}[]`;
             }
             else {
                 if (!find.$ref)
                     return "any";
-                let typeNameSplit = find.$ref.split("/");
-                let typeName = typeNameSplit[typeNameSplit.length - 1];
+                let typeName = refName(find);
                 __usesTypes = true;
-                return `Types.${typeName}`;
+                return `${typeName}`;
             }
         }
         yield _.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
@@ -228,7 +229,7 @@ function genPaths(swaggerDoc, opts) {
         function refName(param) {
             let split = param.$ref.split("/");
             __usesTypes = true;
-            return "Types." + split[split.length - 1];
+            return "Types." + gen_types_1.fixVariableName(split[split.length - 1]);
         }
         function strip(op) {
             return op.map(line => _.omit(line, "type"));
@@ -268,4 +269,11 @@ export const <%=operation.operationId%>
 
 <% }) %>
 `;
+function defaultMapOperation(o) {
+    if (!o.operationId)
+        return o;
+    o.operationId = o.operationId.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
+    return o;
+}
+exports.defaultMapOperation = defaultMapOperation;
 //# sourceMappingURL=gen-paths.js.map

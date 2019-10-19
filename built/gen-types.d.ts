@@ -6,4 +6,5 @@ export interface genTypesOpts {
     mapVariableName?: (s: string) => string;
 }
 export declare function genTypes(swaggerDoc: SwaggerDoc, opts?: genTypesOpts): Promise<string>;
+export declare const fixVariableName: (s: string) => string;
 export {};

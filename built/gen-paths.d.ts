@@ -10,4 +10,5 @@ declare type genPathsOpts = {
     templateString?: string;
 };
 export declare function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>;
+export declare function defaultMapOperation(o: Operation): SwaggerIo.V2.SchemaJson.Definitions.Operation;
 export {};

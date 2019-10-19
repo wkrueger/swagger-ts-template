@@ -21,11 +21,10 @@ export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) 
   //TODO use prettier
   const originalFilename = opts.filename
   const mapVariableName = opts.mapVariableName || (s => s)
-  const fixVariableName = (s: string) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_")
   opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts"
   __definitionRoot = "definitions"
-
   __mainDoc = swaggerDoc
+
   var out = ""
   let external = opts.external ? "export " : ""
   if (!Object.keys(swaggerDoc[__definitionRoot] || {}).length) {
@@ -248,3 +247,5 @@ function wrapLiteral(inp) {
   allLines[allLines.length - 1] = last
   return allLines
 }
+
+export const fixVariableName = (s: string) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_")

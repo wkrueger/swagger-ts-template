@@ -1,7 +1,7 @@
 import _ = require("lodash")
 import fs = require("fs")
 import cp = require("cp")
-import { genTypes, genTypesOpts } from "./gen-types"
+import { genTypes, genTypesOpts, fixVariableName } from "./gen-types"
 import mkdirp = require("mkdirp")
 import rimraf = require("rimraf")
 import path = require("path")
@@ -23,6 +23,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   if (!opts.output) throw Error("Missing parameter: output.")
   opts.moduleStyle = opts.moduleStyle || "commonjs"
   opts.templateString = opts.templateString || defaultTemplateStr
+  opts.mapOperation = opts.mapOperation || defaultMapOperation
   const compiledTemplate = _.template(opts.templateString)
   preNormalize()
 
@@ -121,8 +122,9 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   //DANGEROUSLY MUTABLE AND SHARED
   let __usesTypes = false
 
-  function convertType(type) {
+  function convertType(type: string | { $ref: string }) {
     if (type === "integer") return "number"
+    if (typeof type === "string") return type
     if (type.$ref) {
       return refName(type)
     }
@@ -188,16 +190,14 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     if (!find) return "void"
     if (find.type === "array") {
       if (!_.get(find, ["items", "$ref"])) return "any[]"
-      let typeNameSplit = find.items.$ref.split("/")
-      let typeName = typeNameSplit[typeNameSplit.length - 1]
+      let typeName = refName(find.items)
       __usesTypes = true
-      return `Types.${typeName}[]`
+      return `${typeName}[]`
     } else {
       if (!find.$ref) return "any"
-      let typeNameSplit = find.$ref.split("/")
-      let typeName = typeNameSplit[typeNameSplit.length - 1]
+      let typeName = refName(find)
       __usesTypes = true
-      return `Types.${typeName}`
+      return `${typeName}`
     }
   }
 
@@ -230,10 +230,10 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return found
   }
 
-  function refName(param) {
+  function refName(param: { $ref: string }) {
     let split = param.$ref.split("/")
     __usesTypes = true
-    return "Types." + split[split.length - 1]
+    return "Types." + fixVariableName(split[split.length - 1])
   }
 
   function strip(op: any[]) {
@@ -274,3 +274,9 @@ export const <%=operation.operationId%>
 
 <% }) %>
 `
+
+export function defaultMapOperation(o: Operation) {
+  if (!o.operationId) return o
+  o.operationId = o.operationId!.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_")
+  return o
+}

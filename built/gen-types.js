@@ -21,7 +21,6 @@ function genTypes(swaggerDoc, opts = {}) {
         //TODO use prettier
         const originalFilename = opts.filename;
         const mapVariableName = opts.mapVariableName || (s => s);
-        const fixVariableName = (s) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
         opts.filename = opts.filename || "typing_" + Math.ceil(Math.random() * 10000) + ".d.ts";
         __definitionRoot = "definitions";
         __mainDoc = swaggerDoc;
@@ -53,7 +52,7 @@ function genTypes(swaggerDoc, opts = {}) {
                 extend = "extends" + " " + (templ.extends || []).join(",");
             }
             out += `
-        ${external}${keyword} ${fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}
+        ${external}${keyword} ${exports.fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}
         ${templ.data.join("\n")}
         
         `;
@@ -79,7 +78,7 @@ function genTypes(swaggerDoc, opts = {}) {
                 if (swaggerType.$ref) {
                     const split = swaggerType.$ref.split("/");
                     let variableName = split[split.length - 1];
-                    const validJsCheck = fixVariableName(variableName);
+                    const validJsCheck = exports.fixVariableName(variableName);
                     if (validJsCheck !== variableName) {
                         console.error("Strange variable name at " + path + " , reverting to any.");
                         return { type: "primitive", data: ["any"] };
@@ -112,8 +111,8 @@ function genTypes(swaggerDoc, opts = {}) {
                         var [key, prop] = pair;
                         let current = typeTemplate(prop, path + "." + key, true).data;
                         let required = swaggerType.required && swaggerType.required.indexOf(key) != -1 ? "" : "?";
-                        if (fixVariableName(key) !== key)
-                            key = fixVariableName(key);
+                        if (exports.fixVariableName(key) !== key)
+                            key = exports.fixVariableName(key);
                         current[0] = `${key}${required} : ${mapVariableName(current[0].trim())}`;
                         if (prop.description && !opts.hideComments) {
                             var doc = [
@@ -242,4 +241,5 @@ function wrapLiteral(inp) {
     allLines[allLines.length - 1] = last;
     return allLines;
 }
+exports.fixVariableName = (s) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
 //# sourceMappingURL=gen-types.js.map
