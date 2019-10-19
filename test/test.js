@@ -6,14 +6,14 @@ const fs = require("fs")
 const mkdirp = require("mkdirp")
 
 async function run() {
-  await tap.test("genTypes", async t => {
-    const resp = await tstemplate.genTypes(defs, {
-      external: true,
-      hideComments: false
-    })
-    mkdirp.sync(path.resolve(__dirname, "output", "gentypes"))
-    fs.writeFileSync(path.resolve(__dirname, "output", "gentypes", "gentypes.d.ts"), resp)
-  })
+  // await tap.test("genTypes", async t => {
+  //   const resp = await tstemplate.genTypes(defs, {
+  //     external: true,
+  //     hideComments: false
+  //   })
+  //   mkdirp.sync(path.resolve(__dirname, "output", "gentypes"))
+  //   fs.writeFileSync(path.resolve(__dirname, "output", "gentypes", "gentypes.d.ts"), resp)
+  // })
 
   await tap.test("genPaths", async t => {
     await tstemplate.genPaths(defs, {

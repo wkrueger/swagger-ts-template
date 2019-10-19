@@ -1,4 +1,4 @@
-import _ = require("lodash")
+import lo = require("lodash")
 import fs = require("fs")
 import cp = require("cp")
 import { genTypes, genTypesOpts, fixVariableName } from "./gen-types"
@@ -6,6 +6,7 @@ import mkdirp = require("mkdirp")
 import rimraf = require("rimraf")
 import path = require("path")
 import { promisify } from "util"
+import { TypeTemplate } from "./type-template"
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
 type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation
@@ -24,7 +25,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   opts.moduleStyle = opts.moduleStyle || "commonjs"
   opts.templateString = opts.templateString || defaultTemplateStr
   opts.mapOperation = opts.mapOperation || defaultMapOperation
-  const compiledTemplate = _.template(opts.templateString)
+  const compiledTemplate = lo.template(opts.templateString)
   preNormalize()
 
   await promisify(rimraf)(opts.output)
@@ -33,14 +34,16 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     path.resolve(__dirname, "..", "src", "api-common.ts"),
     path.resolve(opts.output, "api-common.ts")
   )
-  await genTypes(swaggerDoc, {
+  const typesFile = await genTypes(swaggerDoc, {
     external: true,
     hideComments: true,
-    filename: path.resolve(opts.output, "api-types.d.ts"),
+    //filename: path.resolve(opts.output, "api-types.d.ts"),
     ...(opts.typesOpts || {})
   })
+  await promisify(fs.writeFile)(typesFile, path.resolve(opts.output, "api-types.d.ts"))
 
-  let tags: any = _.chain(swaggerDoc.paths)
+  let tags: any = lo
+    .chain(swaggerDoc.paths)
     .toPairs()
     .map(([path, schema]) => {
       //search for a tag name
@@ -51,14 +54,15 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
           let verb = verbs[it]
           if (verb === "parameters") continue
           let verbObj: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
-          if (_.get(verbObj, ["tags", "length"])) {
+          if (lo.get(verbObj, ["tags", "length"])) {
             out.push(...(verbObj.tags || []).map(camelCased))
           }
         }
         return out
       })()
       if (!tags.length) tags.push("NoTag")
-      let out = _.toPairs(schema)
+      let out = lo
+        .toPairs(schema)
         .map(([verb, operation]) => {
           if (verb === "parameters") return null
           operation["__path__"] = path
@@ -75,7 +79,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
               if (p.schema) {
                 p.type = p.schema
               }
-              let out: any = _.pick(p, "name", "type", "required", "in")
+              let out: any = lo.pick(p, "name", "type", "required", "in")
               if (!out.name) throw Error("unexpected")
               return out
             })
@@ -83,7 +87,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
               out[line.name] = line
               return out
             }, {})
-          params = _.values(params)
+          params = lo.values(params)
 
           operation["__mergedParameters__"] = params
           return operation
@@ -102,8 +106,8 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     })
     return [...out, ...spread]
   }, []) // [ Operation ] __tag__ : string
-  tags = _.groupBy(tags, "__tag__") // { [__tag__:string] : Operation[] }
-  tags = _.mapValues(tags, value => {
+  tags = lo.groupBy(tags, "__tag__") // { [__tag__:string] : Operation[] }
+  tags = lo.mapValues(tags, value => {
     let uniq = {}
     value.forEach(v => {
       if (!v.operationId) {
@@ -116,24 +120,13 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       }
       uniq[v.operationId] = v
     })
-    return _.values(uniq)
+    return lo.values(uniq)
   })
 
   //DANGEROUSLY MUTABLE AND SHARED
   let __usesTypes = false
 
-  function convertType(type: string | { $ref: string }) {
-    if (type === "integer") return "number"
-    if (typeof type === "string") return type
-    if (type.$ref) {
-      return refName(type)
-    }
-    if (typeof type === "object" && type !== null) {
-      return "any"
-    }
-    return type
-  }
-
+  const typegen = new TypeTemplate(opts.typesOpts || {}, "definitions", swaggerDoc)
   function paramsType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
@@ -150,10 +143,14 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       if (param.schema) {
         param.type = param.schema
       }
-      //if ((!header && param.in === 'header') || (header && param.in !== 'header')) return
+      const generatedType = typegen.typeTemplate(
+        param.type,
+        operation.operationId + ".params",
+        true
+      )
       if (param.in === "header" && param.name === "Authorization") return
       count++
-      out += `\n    '${param.name}'${param.required ? "" : "?"} : ${convertType(param.type)}`
+      out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType}`
     })
     if (count) out += "\n"
     out += "}"
@@ -180,8 +177,8 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   }
 
   function findResponseSchema(operation) {
-    let find: any = _.get(operation, ["responses", "201", "schema"])
-    if (!find) find = _.get(operation, ["responses", "200", "schema"])
+    let find: any = lo.get(operation, ["responses", "201", "schema"])
+    if (!find) find = lo.get(operation, ["responses", "200", "schema"])
     return find
   }
 
@@ -189,7 +186,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     let find = findResponseSchema(operation)
     if (!find) return "void"
     if (find.type === "array") {
-      if (!_.get(find, ["items", "$ref"])) return "any[]"
+      if (!lo.get(find, ["items", "$ref"])) return "any[]"
       let typeName = refName(find.items)
       __usesTypes = true
       return `${typeName}[]`
@@ -201,7 +198,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     }
   }
 
-  await _.toPairs(tags).reduce(async (chain, [tag, operations]) => {
+  await lo.toPairs(tags).reduce(async (chain, [tag, operations]) => {
     await chain
     __usesTypes = false
     let merged = compiledTemplate({
@@ -226,7 +223,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
 
   function unRef(param) {
     let path = param.$ref.substr(2).split("/")
-    let found = _.get(swaggerDoc, path)
+    let found = lo.get(swaggerDoc, path)
     return found
   }
 
@@ -237,7 +234,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   }
 
   function strip(op: any[]) {
-    return op.map(line => _.omit(line, "type"))
+    return op.map(line => lo.omit(line, "type"))
   }
 }
 

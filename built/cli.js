@@ -30,8 +30,7 @@ if (action === "types") {
         generator
             .genTypes(parsed, {
             hideComments: yargs.argv.c !== undefined,
-            external: yargs.argv.e !== undefined,
-            filename: dest
+            external: yargs.argv.e !== undefined
         })
             .then(() => console.log("Great Success!!"))
             .catch(console.error);

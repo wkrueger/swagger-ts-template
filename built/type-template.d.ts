@@ -1,0 +1,22 @@
+import { genTypesOpts } from "./gen-types";
+declare type SwaggerType = SwaggerIo.V2.SchemaJson.Definitions.Schema;
+declare type SwaggerDoc = SwaggerIo.V2.SchemaJson;
+export declare class TypeTemplate {
+    opts: genTypesOpts;
+    definitionRoot: string;
+    mainDoc: SwaggerDoc;
+    constructor(opts: genTypesOpts, definitionRoot: string, mainDoc: SwaggerDoc);
+    mapVariableName: (s: string) => string;
+    typeTemplate(swaggerType: SwaggerType | string, path: string, embraceObjects?: boolean): {
+        type: string;
+        data: string[];
+        extends?: string[];
+    };
+    mergeAllof(swaggerType: SwaggerType, key?: "allOf" | "anyOf"): {
+        swaggerDoc: any;
+        extends: any[];
+    };
+    findDef(src: any, path: string[]): any;
+    wrapLiteral(inp: any): string[];
+}
+export {};

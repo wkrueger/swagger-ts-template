@@ -8,7 +8,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const _ = require("lodash");
+const lo = require("lodash");
 const fs = require("fs");
 const cp = require("cp");
 const gen_types_1 = require("./gen-types");
@@ -16,6 +16,7 @@ const mkdirp = require("mkdirp");
 const rimraf = require("rimraf");
 const path = require("path");
 const util_1 = require("util");
+const type_template_1 = require("./type-template");
 function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!opts.output)
@@ -23,13 +24,15 @@ function genPaths(swaggerDoc, opts) {
         opts.moduleStyle = opts.moduleStyle || "commonjs";
         opts.templateString = opts.templateString || defaultTemplateStr;
         opts.mapOperation = opts.mapOperation || defaultMapOperation;
-        const compiledTemplate = _.template(opts.templateString);
+        const compiledTemplate = lo.template(opts.templateString);
         preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
-        yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true, hideComments: true, filename: path.resolve(opts.output, "api-types.d.ts") }, (opts.typesOpts || {})));
-        let tags = _.chain(swaggerDoc.paths)
+        const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true, hideComments: true }, (opts.typesOpts || {})));
+        yield util_1.promisify(fs.writeFile)(typesFile, path.resolve(opts.output, "api-types.d.ts"));
+        let tags = lo
+            .chain(swaggerDoc.paths)
             .toPairs()
             .map(([path, schema]) => {
             //search for a tag name
@@ -41,7 +44,7 @@ function genPaths(swaggerDoc, opts) {
                     if (verb === "parameters")
                         continue;
                     let verbObj = schema[verb];
-                    if (_.get(verbObj, ["tags", "length"])) {
+                    if (lo.get(verbObj, ["tags", "length"])) {
                         out.push(...(verbObj.tags || []).map(camelCased));
                     }
                 }
@@ -49,7 +52,8 @@ function genPaths(swaggerDoc, opts) {
             })();
             if (!tags.length)
                 tags.push("NoTag");
-            let out = _.toPairs(schema)
+            let out = lo
+                .toPairs(schema)
                 .map(([verb, operation]) => {
                 if (verb === "parameters")
                     return null;
@@ -67,7 +71,7 @@ function genPaths(swaggerDoc, opts) {
                     if (p.schema) {
                         p.type = p.schema;
                     }
-                    let out = _.pick(p, "name", "type", "required", "in");
+                    let out = lo.pick(p, "name", "type", "required", "in");
                     if (!out.name)
                         throw Error("unexpected");
                     return out;
@@ -76,7 +80,7 @@ function genPaths(swaggerDoc, opts) {
                     out[line.name] = line;
                     return out;
                 }, {});
-                params = _.values(params);
+                params = lo.values(params);
                 operation["__mergedParameters__"] = params;
                 return operation;
             })
@@ -93,8 +97,8 @@ function genPaths(swaggerDoc, opts) {
             });
             return [...out, ...spread];
         }, []); // [ Operation ] __tag__ : string
-        tags = _.groupBy(tags, "__tag__"); // { [__tag__:string] : Operation[] }
-        tags = _.mapValues(tags, value => {
+        tags = lo.groupBy(tags, "__tag__"); // { [__tag__:string] : Operation[] }
+        tags = lo.mapValues(tags, value => {
             let uniq = {};
             value.forEach(v => {
                 if (!v.operationId) {
@@ -108,23 +112,11 @@ function genPaths(swaggerDoc, opts) {
                 }
                 uniq[v.operationId] = v;
             });
-            return _.values(uniq);
+            return lo.values(uniq);
         });
         //DANGEROUSLY MUTABLE AND SHARED
         let __usesTypes = false;
-        function convertType(type) {
-            if (type === "integer")
-                return "number";
-            if (typeof type === "string")
-                return type;
-            if (type.$ref) {
-                return refName(type);
-            }
-            if (typeof type === "object" && type !== null) {
-                return "any";
-            }
-            return type;
-        }
+        const typegen = new type_template_1.TypeTemplate(opts.typesOpts || {}, "definitions", swaggerDoc);
         function paramsType(operation) {
             let params = operation["__mergedParameters__"];
             let out = "{";
@@ -144,11 +136,11 @@ function genPaths(swaggerDoc, opts) {
                 if (param.schema) {
                     param.type = param.schema;
                 }
-                //if ((!header && param.in === 'header') || (header && param.in !== 'header')) return
+                const generatedType = typegen.typeTemplate(param.type, operation.operationId + ".params", true);
                 if (param.in === "header" && param.name === "Authorization")
                     return;
                 count++;
-                out += `\n    '${param.name}'${param.required ? "" : "?"} : ${convertType(param.type)}`;
+                out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType}`;
             });
             if (count)
                 out += "\n";
@@ -175,9 +167,9 @@ function genPaths(swaggerDoc, opts) {
             });
         }
         function findResponseSchema(operation) {
-            let find = _.get(operation, ["responses", "201", "schema"]);
+            let find = lo.get(operation, ["responses", "201", "schema"]);
             if (!find)
-                find = _.get(operation, ["responses", "200", "schema"]);
+                find = lo.get(operation, ["responses", "200", "schema"]);
             return find;
         }
         function responseType(operation) {
@@ -185,7 +177,7 @@ function genPaths(swaggerDoc, opts) {
             if (!find)
                 return "void";
             if (find.type === "array") {
-                if (!_.get(find, ["items", "$ref"]))
+                if (!lo.get(find, ["items", "$ref"]))
                     return "any[]";
                 let typeName = refName(find.items);
                 __usesTypes = true;
@@ -199,7 +191,7 @@ function genPaths(swaggerDoc, opts) {
                 return `${typeName}`;
             }
         }
-        yield _.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
+        yield lo.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
             yield chain;
             __usesTypes = false;
             let merged = compiledTemplate({
@@ -223,7 +215,7 @@ function genPaths(swaggerDoc, opts) {
         }), Promise.resolve());
         function unRef(param) {
             let path = param.$ref.substr(2).split("/");
-            let found = _.get(swaggerDoc, path);
+            let found = lo.get(swaggerDoc, path);
             return found;
         }
         function refName(param) {
@@ -232,7 +224,7 @@ function genPaths(swaggerDoc, opts) {
             return "Types." + gen_types_1.fixVariableName(split[split.length - 1]);
         }
         function strip(op) {
-            return op.map(line => _.omit(line, "type"));
+            return op.map(line => lo.omit(line, "type"));
         }
     });
 }
