@@ -46,7 +46,8 @@ function genTypes(swaggerDoc, opts = {}) {
             }
             out += [
                 `\n${external}${keyword} ${exports.fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}`,
-                `${templ.data.join("\n")}`
+                `${templ.data.join("\n")}`,
+                ""
             ].join("\n");
         });
         let result = prettier.format(out, opts.prettierOpts || exports.defaultPrettierOpts);

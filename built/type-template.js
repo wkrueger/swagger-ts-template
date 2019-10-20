@@ -4,10 +4,11 @@ const wordwrap = require("wordwrap");
 const gen_types_1 = require("./gen-types");
 const lo = require("lodash");
 class TypeTemplate {
-    constructor(opts, definitionRoot, mainDoc) {
+    constructor(opts, definitionRoot, mainDoc, refPrefix = "") {
         this.opts = opts;
         this.definitionRoot = definitionRoot;
         this.mainDoc = mainDoc;
+        this.refPrefix = refPrefix;
         this.mapVariableName = this.opts.mapVariableName || (s => s);
     }
     typeTemplate(swaggerType, path, embraceObjects = false) {
@@ -27,7 +28,7 @@ class TypeTemplate {
                 return { type: "primitive", data: ["any"] };
             }
             return {
-                data: [variableName],
+                data: [this.refPrefix + variableName],
                 type: "ref"
             };
         }

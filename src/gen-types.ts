@@ -48,7 +48,8 @@ export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) 
     }
     out += [
       `\n${external}${keyword} ${fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}`,
-      `${templ.data.join("\n")}`
+      `${templ.data.join("\n")}`,
+      ""
     ].join("\n")
   })
 

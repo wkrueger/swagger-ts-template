@@ -9,7 +9,8 @@ export class TypeTemplate {
   constructor(
     public opts: genTypesOpts,
     public definitionRoot: string,
-    public mainDoc: SwaggerDoc
+    public mainDoc: SwaggerDoc,
+    public refPrefix: string = ""
   ) {}
 
   mapVariableName = this.opts.mapVariableName || (s => s)
@@ -36,7 +37,7 @@ export class TypeTemplate {
         return { type: "primitive", data: ["any"] }
       }
       return {
-        data: [variableName],
+        data: [this.refPrefix + variableName],
         type: "ref"
       }
     }

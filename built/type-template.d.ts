@@ -5,7 +5,8 @@ export declare class TypeTemplate {
     opts: genTypesOpts;
     definitionRoot: string;
     mainDoc: SwaggerDoc;
-    constructor(opts: genTypesOpts, definitionRoot: string, mainDoc: SwaggerDoc);
+    refPrefix: string;
+    constructor(opts: genTypesOpts, definitionRoot: string, mainDoc: SwaggerDoc, refPrefix?: string);
     mapVariableName: (s: string) => string;
     typeTemplate(swaggerType: SwaggerType | string, path: string, embraceObjects?: boolean): {
         type: string;

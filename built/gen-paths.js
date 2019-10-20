@@ -17,6 +17,7 @@ const rimraf = require("rimraf");
 const path = require("path");
 const util_1 = require("util");
 const type_template_1 = require("./type-template");
+const prettier = require("prettier");
 function genPaths(swaggerDoc, opts) {
     return __awaiter(this, void 0, void 0, function* () {
         if (!opts.output)
@@ -24,12 +25,14 @@ function genPaths(swaggerDoc, opts) {
         opts.moduleStyle = opts.moduleStyle || "commonjs";
         opts.templateString = opts.templateString || defaultTemplateStr;
         opts.mapOperation = opts.mapOperation || defaultMapOperation;
+        opts.prettierOpts = opts.prettierOpts || gen_types_1.defaultPrettierOpts;
+        opts.typesOpts = Object.assign({}, (opts.typesOpts || {}), { prettierOpts: opts.prettierOpts });
         const compiledTemplate = lo.template(opts.templateString);
         preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
-        const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true, hideComments: true }, (opts.typesOpts || {})));
+        const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true }, (opts.typesOpts || {})));
         yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile);
         let tags = lo
             .chain(swaggerDoc.paths)
@@ -116,7 +119,44 @@ function genPaths(swaggerDoc, opts) {
         });
         //DANGEROUSLY MUTABLE AND SHARED
         let __usesTypes = false;
-        const typegen = new type_template_1.TypeTemplate(opts.typesOpts || {}, "definitions", swaggerDoc);
+        const typegen = new type_template_1.TypeTemplate(opts.typesOpts, "definitions", swaggerDoc, "Types.");
+        yield lo.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
+            yield chain;
+            __usesTypes = false;
+            let merged = compiledTemplate({
+                operations,
+                paramsType,
+                responseType,
+                strip,
+                getImportString,
+                style: opts.moduleStyle
+            });
+            if (__usesTypes)
+                merged =
+                    getImportString({
+                        variable: "Types",
+                        module: "../api-types",
+                        style: opts.moduleStyle
+                    }) +
+                        "\n" +
+                        merged;
+            merged = prettier.format(merged, opts.prettierOpts);
+            yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
+        }), Promise.resolve());
+        // -----------------------
+        function unRef(param) {
+            let path = param.$ref.substr(2).split("/");
+            let found = lo.get(swaggerDoc, path);
+            return found;
+        }
+        function refName(param) {
+            let split = param.$ref.split("/");
+            __usesTypes = true;
+            return "Types." + gen_types_1.fixVariableName(split[split.length - 1]);
+        }
+        function strip(op) {
+            return op.map(line => lo.omit(line, "type"));
+        }
         function paramsType(operation) {
             let params = operation["__mergedParameters__"];
             let out = "{";
@@ -156,13 +196,13 @@ function genPaths(swaggerDoc, opts) {
                     if (opts.mapOperation) {
                         path[opKey] = opts.mapOperation(path[opKey]);
                     }
-                    const operation = path[opKey];
-                    let find = findResponseSchema(operation);
-                    if (find && !find.$ref) {
-                        const tempTypeName = "__" + operation.operationId + "__response";
-                        swaggerDoc.definitions[tempTypeName] = Object.assign({}, find);
-                        find.$ref = tempTypeName;
-                    }
+                    // const operation = path[opKey]
+                    // let find = findResponseSchema(operation)
+                    // if (find && !find.$ref) {
+                    //   const tempTypeName = "__" + operation.operationId + "__response"
+                    //   swaggerDoc.definitions![tempTypeName] = { ...find }
+                    //   find.$ref = tempTypeName
+                    // }
                 });
             });
         }
@@ -190,41 +230,6 @@ function genPaths(swaggerDoc, opts) {
                 __usesTypes = true;
                 return `${typeName}`;
             }
-        }
-        yield lo.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
-            yield chain;
-            __usesTypes = false;
-            let merged = compiledTemplate({
-                operations,
-                paramsType,
-                responseType,
-                strip,
-                getImportString,
-                style: opts.moduleStyle
-            });
-            if (__usesTypes)
-                merged =
-                    getImportString({
-                        variable: "Types",
-                        module: "../api-types",
-                        style: opts.moduleStyle
-                    }) +
-                        "\n" +
-                        merged;
-            yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
-        }), Promise.resolve());
-        function unRef(param) {
-            let path = param.$ref.substr(2).split("/");
-            let found = lo.get(swaggerDoc, path);
-            return found;
-        }
-        function refName(param) {
-            let split = param.$ref.split("/");
-            __usesTypes = true;
-            return "Types." + gen_types_1.fixVariableName(split[split.length - 1]);
-        }
-        function strip(op) {
-            return op.map(line => lo.omit(line, "type"));
         }
     });
 }

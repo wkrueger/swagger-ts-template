@@ -1,12 +1,13 @@
 import lo = require("lodash")
 import fs = require("fs")
 import cp = require("cp")
-import { genTypes, genTypesOpts, fixVariableName } from "./gen-types"
+import { genTypes, genTypesOpts, fixVariableName, defaultPrettierOpts } from "./gen-types"
 import mkdirp = require("mkdirp")
 import rimraf = require("rimraf")
 import path = require("path")
 import { promisify } from "util"
 import { TypeTemplate } from "./type-template"
+import prettier = require("prettier")
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
 type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation
@@ -18,6 +19,7 @@ type genPathsOpts = {
   typesOpts?: genTypesOpts
   mapOperation?: (operation: Operation) => Operation
   templateString?: string
+  prettierOpts?: prettier.Options
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
@@ -25,6 +27,8 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   opts.moduleStyle = opts.moduleStyle || "commonjs"
   opts.templateString = opts.templateString || defaultTemplateStr
   opts.mapOperation = opts.mapOperation || defaultMapOperation
+  opts.prettierOpts = opts.prettierOpts || defaultPrettierOpts
+  opts.typesOpts = { ...(opts.typesOpts || {}), prettierOpts: opts.prettierOpts }
   const compiledTemplate = lo.template(opts.templateString)
   preNormalize()
 
@@ -36,7 +40,6 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   )
   const typesFile = await genTypes(swaggerDoc, {
     external: true,
-    hideComments: true,
     //filename: path.resolve(opts.output, "api-types.d.ts"),
     ...(opts.typesOpts || {})
   })
@@ -126,7 +129,50 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   //DANGEROUSLY MUTABLE AND SHARED
   let __usesTypes = false
 
-  const typegen = new TypeTemplate(opts.typesOpts || {}, "definitions", swaggerDoc)
+  const typegen = new TypeTemplate(opts.typesOpts, "definitions", swaggerDoc, "Types.")
+
+  await lo.toPairs(tags).reduce(async (chain, [tag, operations]) => {
+    await chain
+    __usesTypes = false
+    let merged = compiledTemplate({
+      operations,
+      paramsType,
+      responseType,
+      strip,
+      getImportString,
+      style: opts.moduleStyle
+    })
+    if (__usesTypes)
+      merged =
+        getImportString({
+          variable: "Types",
+          module: "../api-types",
+          style: opts.moduleStyle
+        }) +
+        "\n" +
+        merged
+    merged = prettier.format(merged, opts.prettierOpts)
+    await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
+  }, Promise.resolve())
+
+  // -----------------------
+
+  function unRef(param) {
+    let path = param.$ref.substr(2).split("/")
+    let found = lo.get(swaggerDoc, path)
+    return found
+  }
+
+  function refName(param: { $ref: string }) {
+    let split = param.$ref.split("/")
+    __usesTypes = true
+    return "Types." + fixVariableName(split[split.length - 1])
+  }
+
+  function strip(op: any[]) {
+    return op.map(line => lo.omit(line, "type"))
+  }
+
   function paramsType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
@@ -165,13 +211,13 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         if (opts.mapOperation) {
           path[opKey] = opts.mapOperation(path[opKey])
         }
-        const operation = path[opKey]
-        let find = findResponseSchema(operation)
-        if (find && !find.$ref) {
-          const tempTypeName = "__" + operation.operationId + "__response"
-          swaggerDoc.definitions![tempTypeName] = { ...find }
-          find.$ref = tempTypeName
-        }
+        // const operation = path[opKey]
+        // let find = findResponseSchema(operation)
+        // if (find && !find.$ref) {
+        //   const tempTypeName = "__" + operation.operationId + "__response"
+        //   swaggerDoc.definitions![tempTypeName] = { ...find }
+        //   find.$ref = tempTypeName
+        // }
       })
     })
   }
@@ -196,45 +242,6 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       __usesTypes = true
       return `${typeName}`
     }
-  }
-
-  await lo.toPairs(tags).reduce(async (chain, [tag, operations]) => {
-    await chain
-    __usesTypes = false
-    let merged = compiledTemplate({
-      operations,
-      paramsType,
-      responseType,
-      strip,
-      getImportString,
-      style: opts.moduleStyle
-    })
-    if (__usesTypes)
-      merged =
-        getImportString({
-          variable: "Types",
-          module: "../api-types",
-          style: opts.moduleStyle
-        }) +
-        "\n" +
-        merged
-    await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
-  }, Promise.resolve())
-
-  function unRef(param) {
-    let path = param.$ref.substr(2).split("/")
-    let found = lo.get(swaggerDoc, path)
-    return found
-  }
-
-  function refName(param: { $ref: string }) {
-    let split = param.$ref.split("/")
-    __usesTypes = true
-    return "Types." + fixVariableName(split[split.length - 1])
-  }
-
-  function strip(op: any[]) {
-    return op.map(line => lo.omit(line, "type"))
   }
 }
 

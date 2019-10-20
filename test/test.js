@@ -18,6 +18,7 @@ async function run() {
   await tap.test("genPaths", async t => {
     await tstemplate.genPaths(defs, {
       output: path.resolve(__dirname, "output", "genpaths"),
+      typesOpts: { hideComments: true },
       moduleStyle: "esm"
     })
   })
