@@ -44,11 +44,10 @@ function genTypes(swaggerDoc, opts = {}) {
             if (isInterface && (templ.extends || []).length) {
                 extend = "extends" + " " + (templ.extends || []).join(",");
             }
-            out += `
-        ${external}${keyword} ${exports.fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}
-        ${templ.data.join("\n")}
-        
-        `;
+            out += [
+                `\n${external}${keyword} ${exports.fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}`,
+                `${templ.data.join("\n")}`
+            ].join("\n");
         });
         let result = prettier.format(out, opts.prettierOpts || exports.defaultPrettierOpts);
         return result;
@@ -59,6 +58,6 @@ exports.fixVariableName = (s) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
 exports.defaultPrettierOpts = {
     semi: false,
     printWidth: 100,
-    parser: "typestript"
+    parser: "typescript"
 };
 //# sourceMappingURL=gen-types.js.map

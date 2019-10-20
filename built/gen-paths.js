@@ -30,7 +30,7 @@ function genPaths(swaggerDoc, opts) {
         yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
         const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true, hideComments: true }, (opts.typesOpts || {})));
-        yield util_1.promisify(fs.writeFile)(typesFile, path.resolve(opts.output, "api-types.d.ts"));
+        yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile);
         let tags = lo
             .chain(swaggerDoc.paths)
             .toPairs()
@@ -140,7 +140,7 @@ function genPaths(swaggerDoc, opts) {
                 if (param.in === "header" && param.name === "Authorization")
                     return;
                 count++;
-                out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType}`;
+                out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType.data.join("\n")}`;
             });
             if (count)
                 out += "\n";

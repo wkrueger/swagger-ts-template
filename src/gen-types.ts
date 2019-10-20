@@ -46,11 +46,10 @@ export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) 
     if (isInterface && (templ.extends || []).length) {
       extend = "extends" + " " + (templ.extends || []).join(",")
     }
-    out += `
-        ${external}${keyword} ${fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}
-        ${templ.data.join("\n")}
-        
-        `
+    out += [
+      `\n${external}${keyword} ${fixVariableName(mapVariableName(item.name))} ${extend}  ${equals}`,
+      `${templ.data.join("\n")}`
+    ].join("\n")
   })
 
   let result = prettier.format(out, opts.prettierOpts || defaultPrettierOpts)
@@ -61,5 +60,5 @@ export const fixVariableName = (s: string) => s.replace(/^[^a-zA-Z_$]|[^\w$]/g, 
 export const defaultPrettierOpts: prettier.Options = {
   semi: false,
   printWidth: 100,
-  parser: "typestript" as "typescript"
+  parser: "typescript" as "typescript"
 }

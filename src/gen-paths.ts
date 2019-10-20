@@ -40,7 +40,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     //filename: path.resolve(opts.output, "api-types.d.ts"),
     ...(opts.typesOpts || {})
   })
-  await promisify(fs.writeFile)(typesFile, path.resolve(opts.output, "api-types.d.ts"))
+  await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
 
   let tags: any = lo
     .chain(swaggerDoc.paths)
@@ -150,7 +150,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       )
       if (param.in === "header" && param.name === "Authorization") return
       count++
-      out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType}`
+      out += `\n    '${param.name}'${param.required ? "" : "?"} : ${generatedType.data.join("\n")}`
     })
     if (count) out += "\n"
     out += "}"
