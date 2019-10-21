@@ -34,6 +34,9 @@ function genPaths(swaggerDoc, opts) {
         yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
         const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true }, (opts.typesOpts || {})));
         yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile);
+        // - groups operations by tags
+        // - "copies down" metadata which were present on higher ranks of the Doc to the scope
+        // of each operation.
         let tags = lo
             .chain(swaggerDoc.paths)
             .toPairs()
@@ -117,45 +120,53 @@ function genPaths(swaggerDoc, opts) {
             });
             return lo.values(uniq);
         });
-        //DANGEROUSLY MUTABLE AND SHARED
-        let __usesTypes = false;
         const typegen = new type_template_1.TypeTemplate(opts.typesOpts, "definitions", swaggerDoc, "Types.");
-        yield lo.toPairs(tags).reduce((chain, [tag, operations]) => __awaiter(this, void 0, void 0, function* () {
-            yield chain;
-            __usesTypes = false;
+        const tagsPairs = lo.toPairs(tags);
+        yield Promise.all(tagsPairs.map(([tag, operations]) => __awaiter(this, void 0, void 0, function* () {
             let merged = compiledTemplate({
                 operations,
                 paramsType,
                 responseType,
                 strip,
                 getImportString,
+                commentBlock,
                 style: opts.moduleStyle
             });
-            if (__usesTypes)
-                merged =
-                    getImportString({
-                        variable: "Types",
-                        module: "../api-types",
-                        style: opts.moduleStyle
-                    }) +
-                        "\n" +
-                        merged;
             merged = prettier.format(merged, opts.prettierOpts);
             yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
-        }), Promise.resolve());
+        })));
         // -----------------------
+        function preNormalize() {
+            Object.keys(swaggerDoc.paths).forEach(pathKey => {
+                const path = swaggerDoc.paths[pathKey];
+                Object.keys(path).forEach(opKey => {
+                    if (opKey === "parameters")
+                        return;
+                    if (opts.mapOperation) {
+                        path[opKey] = opts.mapOperation(path[opKey]);
+                    }
+                });
+            });
+        }
         function unRef(param) {
             let path = param.$ref.substr(2).split("/");
             let found = lo.get(swaggerDoc, path);
             return found;
         }
-        function refName(param) {
-            let split = param.$ref.split("/");
-            __usesTypes = true;
-            return "Types." + gen_types_1.fixVariableName(split[split.length - 1]);
-        }
         function strip(op) {
             return op.map(line => lo.omit(line, "type"));
+        }
+        function findResponseSchema(operation) {
+            let find = lo.get(operation, ["responses", "201", "schema"]);
+            if (!find)
+                find = lo.get(operation, ["responses", "200", "schema"]);
+            return find;
+        }
+        function commentBlock(operation) {
+            const lines = [`${operation.__verb__.toUpperCase()} ${operation.__path__}  `, ""];
+            if (operation.description)
+                lines.push(...operation.description.split("\n"));
+            return lines.map(line => " * " + line).join("\n");
         }
         function paramsType(operation) {
             let params = operation["__mergedParameters__"];
@@ -176,7 +187,7 @@ function genPaths(swaggerDoc, opts) {
                 if (param.schema) {
                     param.type = param.schema;
                 }
-                const generatedType = typegen.typeTemplate(param.type, operation.operationId + ".params", true);
+                const generatedType = typegen.typeTemplate(param.type, operation.operationId + ":params", true);
                 if (param.in === "header" && param.name === "Authorization")
                     return;
                 count++;
@@ -187,49 +198,12 @@ function genPaths(swaggerDoc, opts) {
             out += "}";
             return out;
         }
-        function preNormalize() {
-            Object.keys(swaggerDoc.paths).forEach(pathKey => {
-                const path = swaggerDoc.paths[pathKey];
-                Object.keys(path).forEach(opKey => {
-                    if (opKey === "parameters")
-                        return;
-                    if (opts.mapOperation) {
-                        path[opKey] = opts.mapOperation(path[opKey]);
-                    }
-                    // const operation = path[opKey]
-                    // let find = findResponseSchema(operation)
-                    // if (find && !find.$ref) {
-                    //   const tempTypeName = "__" + operation.operationId + "__response"
-                    //   swaggerDoc.definitions![tempTypeName] = { ...find }
-                    //   find.$ref = tempTypeName
-                    // }
-                });
-            });
-        }
-        function findResponseSchema(operation) {
-            let find = lo.get(operation, ["responses", "201", "schema"]);
-            if (!find)
-                find = lo.get(operation, ["responses", "200", "schema"]);
-            return find;
-        }
         function responseType(operation) {
             let find = findResponseSchema(operation);
             if (!find)
                 return "void";
-            if (find.type === "array") {
-                if (!lo.get(find, ["items", "$ref"]))
-                    return "any[]";
-                let typeName = refName(find.items);
-                __usesTypes = true;
-                return `${typeName}[]`;
-            }
-            else {
-                if (!find.$ref)
-                    return "any";
-                let typeName = refName(find);
-                __usesTypes = true;
-                return `${typeName}`;
-            }
+            const generatedType = typegen.typeTemplate(find, operation.operationId + ":response", true);
+            return generatedType.data.join("\n");
         }
     });
 }
@@ -251,17 +225,23 @@ function getImportString(i) {
     }
 }
 const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
+<%=getImportString({ variable: "Types", module: "../api-types", style: style })%>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
+export type <%=operation.operationId%>_Response = <%= responseType(operation) %>
+/**
+<%=commentBlock(operation)%>
+ **/
 export const <%=operation.operationId%>
     = ApiCommon.requestMaker
-    <<%=operation.operationId%>_Type, <%=responseType(operation)%> >({
+    <<%=operation.operationId%>_Type, <%=operation.operationId%>_Response>({
         id: '<%=operation.operationId%>',
         path: '<%=operation.__path__%>',
         verb: '<%=String(operation.__verb__).toUpperCase()%>',
         parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
     })
+
 
 
 <% }) %>

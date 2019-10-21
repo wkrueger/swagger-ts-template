@@ -1,7 +1,7 @@
 import lo = require("lodash")
 import fs = require("fs")
 import cp = require("cp")
-import { genTypes, genTypesOpts, fixVariableName, defaultPrettierOpts } from "./gen-types"
+import { genTypes, genTypesOpts, defaultPrettierOpts } from "./gen-types"
 import mkdirp = require("mkdirp")
 import rimraf = require("rimraf")
 import path = require("path")
@@ -10,7 +10,10 @@ import { TypeTemplate } from "./type-template"
 import prettier = require("prettier")
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
-type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation
+type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation & {
+  __path__: string
+  __verb__: string
+}
 
 type genPathsOpts = {
   output: string
@@ -45,6 +48,9 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   })
   await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
 
+  // - groups operations by tags
+  // - "copies down" metadata which were present on higher ranks of the Doc to the scope
+  // of each operation.
   let tags: any = lo
     .chain(swaggerDoc.paths)
     .toPairs()
@@ -126,36 +132,38 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return lo.values(uniq)
   })
 
-  //DANGEROUSLY MUTABLE AND SHARED
-  let __usesTypes = false
-
   const typegen = new TypeTemplate(opts.typesOpts, "definitions", swaggerDoc, "Types.")
 
-  await lo.toPairs(tags).reduce(async (chain, [tag, operations]) => {
-    await chain
-    __usesTypes = false
-    let merged = compiledTemplate({
-      operations,
-      paramsType,
-      responseType,
-      strip,
-      getImportString,
-      style: opts.moduleStyle
+  const tagsPairs = lo.toPairs(tags)
+  await Promise.all(
+    tagsPairs.map(async ([tag, operations]) => {
+      let merged = compiledTemplate({
+        operations,
+        paramsType,
+        responseType,
+        strip,
+        getImportString,
+        commentBlock,
+        style: opts.moduleStyle
+      })
+      merged = prettier.format(merged, opts.prettierOpts)
+      await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
     })
-    if (__usesTypes)
-      merged =
-        getImportString({
-          variable: "Types",
-          module: "../api-types",
-          style: opts.moduleStyle
-        }) +
-        "\n" +
-        merged
-    merged = prettier.format(merged, opts.prettierOpts)
-    await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
-  }, Promise.resolve())
+  )
 
   // -----------------------
+
+  function preNormalize() {
+    Object.keys(swaggerDoc.paths).forEach(pathKey => {
+      const path = swaggerDoc.paths[pathKey]
+      Object.keys(path).forEach(opKey => {
+        if (opKey === "parameters") return
+        if (opts.mapOperation) {
+          path[opKey] = opts.mapOperation(path[opKey])
+        }
+      })
+    })
+  }
 
   function unRef(param) {
     let path = param.$ref.substr(2).split("/")
@@ -163,17 +171,23 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return found
   }
 
-  function refName(param: { $ref: string }) {
-    let split = param.$ref.split("/")
-    __usesTypes = true
-    return "Types." + fixVariableName(split[split.length - 1])
-  }
-
   function strip(op: any[]) {
     return op.map(line => lo.omit(line, "type"))
   }
 
-  function paramsType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
+  function findResponseSchema(operation) {
+    let find: any = lo.get(operation, ["responses", "201", "schema"])
+    if (!find) find = lo.get(operation, ["responses", "200", "schema"])
+    return find
+  }
+
+  function commentBlock(operation: Operation) {
+    const lines = [`${operation.__verb__.toUpperCase()} ${operation.__path__}  `, ""]
+    if (operation.description) lines.push(...operation.description.split("\n"))
+    return lines.map(line => " * " + line).join("\n")
+  }
+
+  function paramsType(operation: Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
     let count = 0
@@ -191,7 +205,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       }
       const generatedType = typegen.typeTemplate(
         param.type,
-        operation.operationId + ".params",
+        operation.operationId + ":params",
         true
       )
       if (param.in === "header" && param.name === "Authorization") return
@@ -203,45 +217,11 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return out
   }
 
-  function preNormalize() {
-    Object.keys(swaggerDoc.paths).forEach(pathKey => {
-      const path = swaggerDoc.paths[pathKey]
-      Object.keys(path).forEach(opKey => {
-        if (opKey === "parameters") return
-        if (opts.mapOperation) {
-          path[opKey] = opts.mapOperation(path[opKey])
-        }
-        // const operation = path[opKey]
-        // let find = findResponseSchema(operation)
-        // if (find && !find.$ref) {
-        //   const tempTypeName = "__" + operation.operationId + "__response"
-        //   swaggerDoc.definitions![tempTypeName] = { ...find }
-        //   find.$ref = tempTypeName
-        // }
-      })
-    })
-  }
-
-  function findResponseSchema(operation) {
-    let find: any = lo.get(operation, ["responses", "201", "schema"])
-    if (!find) find = lo.get(operation, ["responses", "200", "schema"])
-    return find
-  }
-
   function responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
     let find = findResponseSchema(operation)
     if (!find) return "void"
-    if (find.type === "array") {
-      if (!lo.get(find, ["items", "$ref"])) return "any[]"
-      let typeName = refName(find.items)
-      __usesTypes = true
-      return `${typeName}[]`
-    } else {
-      if (!find.$ref) return "any"
-      let typeName = refName(find)
-      __usesTypes = true
-      return `${typeName}`
-    }
+    const generatedType = typegen.typeTemplate(find, operation.operationId + ":response", true)
+    return generatedType.data.join("\n")
   }
 }
 
@@ -263,17 +243,23 @@ function getImportString(i: { variable: string; module: string; style: "commonjs
 }
 
 const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
+<%=getImportString({ variable: "Types", module: "../api-types", style: style })%>
 
 <% operations.forEach( operation => { %>
 export type <%=operation.operationId%>_Type = <%= paramsType(operation) %>
+export type <%=operation.operationId%>_Response = <%= responseType(operation) %>
+/**
+<%=commentBlock(operation)%>
+ **/
 export const <%=operation.operationId%>
     = ApiCommon.requestMaker
-    <<%=operation.operationId%>_Type, <%=responseType(operation)%> >({
+    <<%=operation.operationId%>_Type, <%=operation.operationId%>_Response>({
         id: '<%=operation.operationId%>',
         path: '<%=operation.__path__%>',
         verb: '<%=String(operation.__verb__).toUpperCase()%>',
         parameters: <%=JSON.stringify(strip(operation.__mergedParameters__))%>
     })
+
 
 
 <% }) %>
