@@ -1,6 +1,6 @@
 {
   "name": "@proerd/swagger-ts-template",
-  "version": "1.13.3",
+  "version": "1.13.4",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
@@ -16,7 +16,8 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "tsc && tap test/*.js"
+    "test": "tsc && tap test/*.js",
+    "prepublish": "yarn test"
   },
   "devDependencies": {
     "@types/lodash": "^4.14.36",
