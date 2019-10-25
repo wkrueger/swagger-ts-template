@@ -243,6 +243,7 @@ function getImportString(i: { variable: string; module: string; style: "commonjs
 }
 
 const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>
+// @ts-ignore
 <%=getImportString({ variable: "Types", module: "../api-types", style: style })%>
 
 <% operations.forEach( operation => { %>
