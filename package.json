@@ -1,6 +1,6 @@
 {
   "name": "@proerd/swagger-ts-template",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
@@ -35,7 +35,7 @@
     "mkdirp": "^0.5.1",
     "prettier": "^1.18.2",
     "rimraf": "^2.6.1",
-    "word-wrap": "^1.1.0",
+    "wordwrap": "^1.0.0",
     "yargs": "^6.0.0"
   }
 }
