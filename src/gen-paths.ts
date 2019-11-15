@@ -23,7 +23,8 @@ type genPathsOpts = {
   mapOperation?: (
     operation: Operation,
     pathItem: SwaggerIo.V2.SchemaJson.Definitions.PathItem,
-    pathKey: string
+    pathKey: string,
+    methodKey: string
   ) => Operation
   templateString?: string
   prettierOpts?: prettier.Options
@@ -163,7 +164,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       Object.keys(path).forEach(opKey => {
         if (opKey === "parameters") return
         if (opts.mapOperation) {
-          path[opKey] = opts.mapOperation(path[opKey], path, pathKey)
+          path[opKey] = opts.mapOperation(path[opKey], path, pathKey, opKey)
         }
       })
     })

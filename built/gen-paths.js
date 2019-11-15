@@ -143,7 +143,7 @@ function genPaths(swaggerDoc, opts) {
                     if (opKey === "parameters")
                         return;
                     if (opts.mapOperation) {
-                        path[opKey] = opts.mapOperation(path[opKey], path, pathKey);
+                        path[opKey] = opts.mapOperation(path[opKey], path, pathKey, opKey);
                     }
                 });
             });

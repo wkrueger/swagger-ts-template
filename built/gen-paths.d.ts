@@ -10,7 +10,7 @@ declare type genPathsOpts = {
     moduleStyle: "commonjs" | "esm";
     failOnMissingOperationId?: boolean;
     typesOpts?: genTypesOpts;
-    mapOperation?: (operation: Operation, pathItem: SwaggerIo.V2.SchemaJson.Definitions.PathItem, pathKey: string) => Operation;
+    mapOperation?: (operation: Operation, pathItem: SwaggerIo.V2.SchemaJson.Definitions.PathItem, pathKey: string, methodKey: string) => Operation;
     templateString?: string;
     prettierOpts?: prettier.Options;
 };
