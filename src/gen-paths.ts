@@ -20,7 +20,11 @@ type genPathsOpts = {
   moduleStyle: "commonjs" | "esm"
   failOnMissingOperationId?: boolean
   typesOpts?: genTypesOpts
-  mapOperation?: (operation: Operation) => Operation
+  mapOperation?: (
+    operation: Operation,
+    pathItem: SwaggerIo.V2.SchemaJson.Definitions.PathItem,
+    pathKey: string
+  ) => Operation
   templateString?: string
   prettierOpts?: prettier.Options
 }
@@ -159,7 +163,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       Object.keys(path).forEach(opKey => {
         if (opKey === "parameters") return
         if (opts.mapOperation) {
-          path[opKey] = opts.mapOperation(path[opKey])
+          path[opKey] = opts.mapOperation(path[opKey], path, pathKey)
         }
       })
     })

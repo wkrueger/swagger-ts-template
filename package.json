@@ -1,6 +1,6 @@
 {
   "name": "@proerd/swagger-ts-template",
-  "version": "1.13.4",
+  "version": "1.14.0",
   "description": "Generate .d.ts from swagger json.",
   "main": "built/main.js",
   "engines": {
