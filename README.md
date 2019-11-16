@@ -8,23 +8,13 @@ yarn add @proerd/swagger-ts-template
 
 Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 
-1. Generates a `d.ts` file containing the type definitions from
-   a swagger `.json` file.
-
-2. Generates an (opinionated) typescript consumer API, focused on bringing
+ - Generates an (opinionated) typescript consumer API, focused on bringing
    types to the table.
-
-**USAGE 2 is what you will usually be doing.**
 
 ```javascript
 var generator = require("swagger-ts-template")
 var swaggerFile = require("./api.json")
 
-// usage 1: only get the type definitions, saves to a string
-let output = generator.genTypes(swaggerFile, { hideComments: true })
-fs.writeFileSync("api.d.ts", output)
-
-// usage 2: generates TS api consumer, saves to folder
 generator.genPaths(swaggerFile, { output: "./api" }).then(() => console.log("okay"))
 ```
 
@@ -38,22 +28,6 @@ This has been serving me great for a couple of years.
 - You can add extra input or output arguments through interface augmenting, which works fine for covering special cases;
 
 ([detailed article with motivations](https://dev.to/wkrueger/integrating-apis-to-a-typescript-frontend-with-openapi-swagger-3521))
-
-## genTypes
-
-Skims the "declarations" key, generating a single `.d.ts` file.
-
-```ts
-export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}): Promise<string>
-
-export interface genTypesOpts {
-  // true: generate a module (use export), false: declare types globally
-  external?: any
-  hideComments?: boolean
-  // optionally rename variables, may be used to fix issues
-  mapVariableName?: (s: string) => string
-}
-```
 
 ## genPaths options
 
