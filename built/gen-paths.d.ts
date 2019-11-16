@@ -16,4 +16,6 @@ declare type genPathsOpts = {
 };
 export declare function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>;
 export declare function defaultMapOperation(o: Operation): Operation;
+export declare function generateOperationId(pathKey: string, methodKey: string): string;
+export declare function generateOperationTag(pathKey: string): string;
 export {};

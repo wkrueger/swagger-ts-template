@@ -1,7 +1,7 @@
 import lo = require("lodash")
 import fs = require("fs")
 import cp = require("cp")
-import { genTypes, genTypesOpts, defaultPrettierOpts } from "./gen-types"
+import { genTypes, genTypesOpts, defaultPrettierOpts, fixVariableName } from "./gen-types"
 import mkdirp = require("mkdirp")
 import rimraf = require("rimraf")
 import path = require("path")
@@ -14,6 +14,8 @@ type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation & {
   __path__: string
   __verb__: string
 }
+
+type Values<T extends {}> = T[keyof T]
 
 type genPathsOpts = {
   output: string
@@ -58,7 +60,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
   // of each operation.
   let tags: any = lo
     .chain(swaggerDoc.paths)
-    .toPairs()
+    .toPairs<Values<typeof swaggerDoc.paths>>()
     .map(([path, schema]) => {
       //search for a tag name
       let tags = (() => {
@@ -67,10 +69,11 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         for (let it = 0; it < verbs.length; it++) {
           let verb = verbs[it]
           if (verb === "parameters") continue
-          let verbObj: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
-          if (lo.get(verbObj, ["tags", "length"])) {
-            out.push(...(verbObj.tags || []).map(camelCased))
+          let operation: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
+          if (!operation.tags?.length) {
+            operation.tags = [generateOperationTag(path)]
           }
+          out.push(...(operation.tags || []).map(camelCased))
         }
         return out
       })()
@@ -79,10 +82,10 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         .toPairs(schema)
         .map(([verb, operation]) => {
           if (verb === "parameters") return null
-          operation["__path__"] = path
-          operation["__tag__"] = tags
-          operation["__verb__"] = verb
-          operation["__parentParameters__"] = schema["parameters"]
+          operation.__path__ = path
+          operation.__tag__ = tags
+          operation.__verb__ = verb
+          operation.__parentParameters__ = schema["parameters"]
           let params = [
             ...(operation["__parentParameters__"] || []),
             ...(operation.parameters || [])
@@ -128,8 +131,13 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         if (opts.failOnMissingOperationId) {
           throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
         } else {
-          console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
-          return
+          const oid = generateOperationId(v.__path__, v.__verb__)
+          console.info(
+            `operationId missing for route ${v.__verb__.toUpperCase()} ${
+              v.__path__
+            }. Generated name ${oid} from path.`
+          )
+          v.operationId = oid
         }
       }
       uniq[v.operationId] = v
@@ -168,6 +176,11 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         }
       })
     })
+    const mappedDefs = {} as Record<string, JsonSchemaOrg.Draft04.Schema>
+    Object.keys(swaggerDoc.definitions!).forEach(key => {
+      mappedDefs[fixVariableName(key)] = swaggerDoc.definitions![key]
+    })
+    swaggerDoc.definitions = mappedDefs
   }
 
   function unRef(param) {
@@ -273,6 +286,30 @@ export const <%=operation.operationId%>
 
 export function defaultMapOperation(o: Operation) {
   if (!o.operationId) return o
-  o.operationId = o.operationId!.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_")
+  o.operationId = fixVariableName(o.operationId!)
   return o
+}
+
+export function generateOperationId(pathKey: string, methodKey: string) {
+  const pre = pathKey
+    .split("/")
+    .slice(1)
+    .map((expr, idx, list) => {
+      if (expr.startsWith("{")) return ""
+      const next = list[idx + 1]
+      if (next && next.startsWith("{")) {
+        return expr.substr(0, expr.length - 1)
+      }
+      return expr
+    })
+    .join("_")
+  const camel = lo.camelCase(methodKey + "_" + pre)
+  console.log(camel)
+  return camel
+}
+
+export function generateOperationTag(pathKey: string) {
+  const found = pathKey.match(/^\/\w+/)
+  if (!found) return 'unknown'
+  return found[0].substr(1);
 }

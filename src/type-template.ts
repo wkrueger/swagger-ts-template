@@ -30,12 +30,12 @@ export class TypeTemplate {
 
     if (swaggerType.$ref) {
       const split = swaggerType.$ref.split("/")
-      let variableName = split[split.length - 1]
-      const validJsCheck = fixVariableName(variableName)
-      if (validJsCheck !== variableName) {
-        console.error("Strange variable name at " + path + " , reverting to any.")
-        return { type: "primitive", data: ["any"] }
-      }
+      let variableName = fixVariableName(split[split.length - 1])
+      // const validJsCheck = fixVariableName(variableName)
+      // if (validJsCheck !== variableName) {
+      //   console.error("Strange variable name at " + path + " , reverting to any.")
+      //   return { type: "primitive", data: ["any"] }
+      // }
       return {
         data: [this.refPrefix + variableName],
         type: "ref"

@@ -1,9 +1,10 @@
 "use strict";
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
         function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
         function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : new P(function (resolve) { resolve(result.value); }).then(fulfilled, rejected); }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
@@ -26,7 +27,7 @@ function genPaths(swaggerDoc, opts) {
         opts.templateString = opts.templateString || defaultTemplateStr;
         opts.mapOperation = opts.mapOperation || defaultMapOperation;
         opts.prettierOpts = opts.prettierOpts || gen_types_1.defaultPrettierOpts;
-        opts.typesOpts = Object.assign({}, (opts.typesOpts || {}), { prettierOpts: opts.prettierOpts });
+        opts.typesOpts = Object.assign(Object.assign({}, (opts.typesOpts || {})), { prettierOpts: opts.prettierOpts });
         const compiledTemplate = lo.template(opts.templateString);
         preNormalize();
         yield util_1.promisify(rimraf)(opts.output);
@@ -43,16 +44,18 @@ function genPaths(swaggerDoc, opts) {
             .map(([path, schema]) => {
             //search for a tag name
             let tags = (() => {
+                var _a;
                 let verbs = Object.keys(schema);
                 let out = [];
                 for (let it = 0; it < verbs.length; it++) {
                     let verb = verbs[it];
                     if (verb === "parameters")
                         continue;
-                    let verbObj = schema[verb];
-                    if (lo.get(verbObj, ["tags", "length"])) {
-                        out.push(...(verbObj.tags || []).map(camelCased));
+                    let operation = schema[verb];
+                    if (!((_a = operation.tags) === null || _a === void 0 ? void 0 : _a.length)) {
+                        operation.tags = [generateOperationTag(path)];
                     }
+                    out.push(...(operation.tags || []).map(camelCased));
                 }
                 return out;
             })();
@@ -63,10 +66,10 @@ function genPaths(swaggerDoc, opts) {
                 .map(([verb, operation]) => {
                 if (verb === "parameters")
                     return null;
-                operation["__path__"] = path;
-                operation["__tag__"] = tags;
-                operation["__verb__"] = verb;
-                operation["__parentParameters__"] = schema["parameters"];
+                operation.__path__ = path;
+                operation.__tag__ = tags;
+                operation.__verb__ = verb;
+                operation.__parentParameters__ = schema["parameters"];
                 let params = [
                     ...(operation["__parentParameters__"] || []),
                     ...(operation.parameters || [])
@@ -99,7 +102,7 @@ function genPaths(swaggerDoc, opts) {
             .value();
         tags = tags.reduce((out, operation) => {
             let spread = operation.__tag__.map(tag => {
-                return Object.assign({}, operation, { __tag__: tag });
+                return Object.assign(Object.assign({}, operation), { __tag__: tag });
             });
             return [...out, ...spread];
         }, []); // [ Operation ] __tag__ : string
@@ -112,8 +115,9 @@ function genPaths(swaggerDoc, opts) {
                         throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
                     }
                     else {
-                        console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
-                        return;
+                        const oid = generateOperationId(v.__path__, v.__verb__);
+                        console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}. Generated name ${oid} from path.`);
+                        v.operationId = oid;
                     }
                 }
                 uniq[v.operationId] = v;
@@ -147,6 +151,11 @@ function genPaths(swaggerDoc, opts) {
                     }
                 });
             });
+            const mappedDefs = {};
+            Object.keys(swaggerDoc.definitions).forEach(key => {
+                mappedDefs[gen_types_1.fixVariableName(key)] = swaggerDoc.definitions[key];
+            });
+            swaggerDoc.definitions = mappedDefs;
         }
         function unRef(param) {
             let path = param.$ref.substr(2).split("/");
@@ -250,8 +259,34 @@ export const <%=operation.operationId%>
 function defaultMapOperation(o) {
     if (!o.operationId)
         return o;
-    o.operationId = o.operationId.replace(/^[^a-zA-Z_$]|[^\w$]/g, "_");
+    o.operationId = gen_types_1.fixVariableName(o.operationId);
     return o;
 }
 exports.defaultMapOperation = defaultMapOperation;
+function generateOperationId(pathKey, methodKey) {
+    const pre = pathKey
+        .split("/")
+        .slice(1)
+        .map((expr, idx, list) => {
+        if (expr.startsWith("{"))
+            return "";
+        const next = list[idx + 1];
+        if (next && next.startsWith("{")) {
+            return expr.substr(0, expr.length - 1);
+        }
+        return expr;
+    })
+        .join("_");
+    const camel = lo.camelCase(methodKey + "_" + pre);
+    console.log(camel);
+    return camel;
+}
+exports.generateOperationId = generateOperationId;
+function generateOperationTag(pathKey) {
+    const found = pathKey.match(/^\/\w+/);
+    if (!found)
+        return 'unknown';
+    return found[0].substr(1);
+}
+exports.generateOperationTag = generateOperationTag;
 //# sourceMappingURL=gen-paths.js.map
