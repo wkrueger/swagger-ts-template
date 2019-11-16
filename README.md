@@ -37,6 +37,8 @@ This has been serving me great for a couple of years.
 - The default "payload processing" is also easily extensible;
 - You can add extra input or output arguments through interface augmenting, which works fine for covering special cases;
 
+((detailed article with motivations)[https://dev.to/wkrueger/integrating-apis-to-a-typescript-frontend-with-openapi-swagger-3521])
+
 ## genTypes
 
 Skims the "declarations" key, generating a single `.d.ts` file.
