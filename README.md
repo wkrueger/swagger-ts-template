@@ -8,8 +8,7 @@ yarn add @proerd/swagger-ts-template
 
 Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
 
- - Generates an (opinionated) typescript consumer API, focused on bringing
-   types to the table.
+ - Generates an (opinionated) typescript consumer API. Call REST APIs just as functions. Forget about HTTP details. Get doc suggestions and typed responses.
 
 ```javascript
 var generator = require("swagger-ts-template")
