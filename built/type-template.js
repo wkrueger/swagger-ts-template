@@ -116,6 +116,9 @@ class TypeTemplate {
                 extends: merged.extends
             };
         }
+        if (swaggerType.type) {
+            return this.typeTemplate(swaggerType.type, path, embraceObjects);
+        }
         console.error("Unhandled type at " + path, swaggerType);
         return {
             type: "primitive",

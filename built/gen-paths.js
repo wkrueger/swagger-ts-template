@@ -196,7 +196,7 @@ function genPaths(swaggerDoc, opts) {
                 if (param.schema) {
                     param.type = param.schema;
                 }
-                const generatedType = typegen.typeTemplate(param.type, operation.operationId + ":params", true);
+                const generatedType = typegen.typeTemplate(param, operation.operationId + ":params", true);
                 if (param.in === "header" && param.name === "Authorization")
                     return;
                 count++;

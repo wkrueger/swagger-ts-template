@@ -222,7 +222,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
         param.type = param.schema
       }
       const generatedType = typegen.typeTemplate(
-        param.type,
+        param,
         operation.operationId + ":params",
         true
       )
