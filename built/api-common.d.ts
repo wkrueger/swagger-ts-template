@@ -29,7 +29,7 @@ export declare abstract class SwaggerRequester {
      * Override to return API Response + Common extra fields
      * (Response + GApiCommon.MergeToResponse)
      */
-    abstract handler(request: IRequest & GApiCommon.MergeToRequest, input: Record<string, any>, operation: IOperation): Promise<any>;
+    abstract handler(request: IRequest, input: Record<string, any> & GApiCommon.MergeToRequest, operation: IOperation): Promise<any>;
 }
 export declare const settings: {
     getRequester(): SwaggerRequester;
