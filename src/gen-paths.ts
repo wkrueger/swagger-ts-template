@@ -32,180 +32,186 @@ type genPathsOpts = {
   prettierOpts?: prettier.Options
 }
 
-export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
-  if (!opts.output) throw Error("Missing parameter: output.")
-  opts.moduleStyle = opts.moduleStyle || "commonjs"
-  opts.templateString = opts.templateString || defaultTemplateStr
-  opts.mapOperation = opts.mapOperation || defaultMapOperation
-  opts.prettierOpts = opts.prettierOpts || defaultPrettierOpts
-  opts.typesOpts = { ...(opts.typesOpts || {}), prettierOpts: opts.prettierOpts }
-  const compiledTemplate = lo.template(opts.templateString)
-  preNormalize()
+export class GenPathsClass {
 
-  await promisify(rimraf)(opts.output)
-  await promisify(mkdirp as any)(path.resolve(opts.output, "modules"))
-  await promisify(cp)(
-    path.resolve(__dirname, "..", "src", "api-common.ts"),
-    path.resolve(opts.output, "api-common.ts")
-  )
-  const typesFile = await genTypes(swaggerDoc, {
-    external: true,
-    //filename: path.resolve(opts.output, "api-types.d.ts"),
-    ...(opts.typesOpts || {})
-  })
-  await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
+  constructor(public swaggerDoc: SwaggerDoc, public opts: genPathsOpts) {}
+  typegen = new TypeTemplate(this.opts.typesOpts!, "definitions", this.swaggerDoc, "Types.")
 
-  // - groups operations by tags
-  // - "copies down" metadata which were present on higher ranks of the Doc to the scope
-  // of each operation.
-  let tags: any = lo
-    .chain(swaggerDoc.paths)
-    .toPairs<Values<typeof swaggerDoc.paths>>()
-    .map(([path, schema]) => {
-      //search for a tag name
-      let tags = (() => {
-        let verbs = Object.keys(schema)
-        let out: string[] = []
-        for (let it = 0; it < verbs.length; it++) {
-          let verb = verbs[it]
-          if (verb === "parameters") continue
-          let operation: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
-          if (!operation.tags?.length) {
-            operation.tags = [generateOperationTag(path)]
+  async run() {
+    const {swaggerDoc, opts} = this
+    if (!opts.output) throw Error("Missing parameter: output.")
+    opts.moduleStyle = opts.moduleStyle || "commonjs"
+    opts.templateString = opts.templateString || defaultTemplateStr
+    opts.mapOperation = opts.mapOperation || defaultMapOperation
+    opts.prettierOpts = opts.prettierOpts || defaultPrettierOpts
+    opts.typesOpts = { ...(opts.typesOpts || {}), prettierOpts: opts.prettierOpts }
+    this.preNormalize()
+  
+    await promisify(rimraf)(opts.output)
+    await promisify(mkdirp as any)(path.resolve(opts.output, "modules"))
+    await promisify(cp)(
+      path.resolve(__dirname, "..", "src", "api-common.ts"),
+      path.resolve(opts.output, "api-common.ts")
+    )
+    const typesFile = await genTypes(swaggerDoc, {
+      external: true,
+      //filename: path.resolve(opts.output, "api-types.d.ts"),
+      ...(opts.typesOpts || {})
+    })
+    await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
+  
+    // - groups operations by tags
+    // - "copies down" metadata which were present on higher ranks of the Doc to the scope
+    // of each operation.
+    let tags: any = lo
+      .chain(swaggerDoc.paths)
+      .toPairs<Values<typeof swaggerDoc.paths>>()
+      .map(([path, schema]) => {
+        //search for a tag name
+        let tags = (() => {
+          let verbs = Object.keys(schema)
+          let out: string[] = []
+          for (let it = 0; it < verbs.length; it++) {
+            let verb = verbs[it]
+            if (verb === "parameters") continue
+            let operation: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
+            if (!operation.tags?.length) {
+              operation.tags = [generateOperationTag(path)]
+            }
+            out.push(...(operation.tags || []).map(camelCased))
           }
-          out.push(...(operation.tags || []).map(camelCased))
-        }
+          return out
+        })()
+        if (!tags.length) tags.push("NoTag")
+        let out = lo
+          .toPairs(schema)
+          .map(([verb, operation]) => {
+            if (verb === "parameters") return null
+            operation.__path__ = path
+            operation.__tag__ = tags
+            operation.__verb__ = verb
+            operation.__parentParameters__ = schema["parameters"]
+            let params = [
+              ...(operation["__parentParameters__"] || []),
+              ...(operation.parameters || [])
+            ]
+              .map(p => {
+                if (p.$ref) p = this.unRef(p)
+  
+                if (p.schema) {
+                  p.type = p.schema
+                }
+                let out: any = lo.pick(p, "name", "type", "required", "in")
+                if (!out.name) throw Error("unexpected")
+                return out
+              })
+              .reduce((out, line: any) => {
+                out[line.name] = line
+                return out
+              }, {})
+            params = lo.values(params)
+  
+            operation["__mergedParameters__"] = params
+            return operation
+          })
+          .filter(i => i !== null)
         return out
-      })()
-      if (!tags.length) tags.push("NoTag")
-      let out = lo
-        .toPairs(schema)
-        .map(([verb, operation]) => {
-          if (verb === "parameters") return null
-          operation.__path__ = path
-          operation.__tag__ = tags
-          operation.__verb__ = verb
-          operation.__parentParameters__ = schema["parameters"]
-          let params = [
-            ...(operation["__parentParameters__"] || []),
-            ...(operation.parameters || [])
-          ]
-            .map(p => {
-              if (p.$ref) p = unRef(p)
-
-              if (p.schema) {
-                p.type = p.schema
-              }
-              let out: any = lo.pick(p, "name", "type", "required", "in")
-              if (!out.name) throw Error("unexpected")
-              return out
-            })
-            .reduce((out, line: any) => {
-              out[line.name] = line
-              return out
-            }, {})
-          params = lo.values(params)
-
-          operation["__mergedParameters__"] = params
-          return operation
-        })
-        .filter(i => i !== null)
-      return out
-    }) // [ [Operation], [Operation] ]
-    .reduce((out: any, curr) => {
-      return [...out, ...curr]
-    }, []) // [ Operation ] __tag__ : string[]
-    .value()
-
-  tags = tags.reduce((out, operation) => {
-    let spread = operation.__tag__.map(tag => {
-      return { ...operation, __tag__: tag }
-    })
-    return [...out, ...spread]
-  }, []) // [ Operation ] __tag__ : string
-  tags = lo.groupBy(tags, "__tag__") // { [__tag__:string] : Operation[] }
-  tags = lo.mapValues(tags, value => {
-    let uniq = {}
-    value.forEach(v => {
-      if (!v.operationId) {
-        if (opts.failOnMissingOperationId) {
-          throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
-        } else {
-          const oid = generateOperationId(v.__path__, v.__verb__)
-          console.info(
-            `operationId missing for route ${v.__verb__.toUpperCase()} ${
-              v.__path__
-            }. Generated name ${oid} from path.`
-          )
-          v.operationId = oid
-        }
-      }
-      uniq[v.operationId] = v
-    })
-    return lo.values(uniq)
-  })
-
-  const typegen = new TypeTemplate(opts.typesOpts, "definitions", swaggerDoc, "Types.")
-
-  const tagsPairs = lo.toPairs(tags)
-  await Promise.all(
-    tagsPairs.map(async ([tag, operations]) => {
-      let merged = compiledTemplate({
-        operations,
-        paramsType,
-        responseType,
-        strip,
-        getImportString,
-        commentBlock,
-        style: opts.moduleStyle
+      }) // [ [Operation], [Operation] ]
+      .reduce((out: any, curr) => {
+        return [...out, ...curr]
+      }, []) // [ Operation ] __tag__ : string[]
+      .value()
+  
+    tags = tags.reduce((out, operation) => {
+      let spread = operation.__tag__.map(tag => {
+        return { ...operation, __tag__: tag }
       })
-      merged = prettier.format(merged, opts.prettierOpts)
-      await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
+      return [...out, ...spread]
+    }, []) // [ Operation ] __tag__ : string
+    tags = lo.groupBy(tags, "__tag__") // { [__tag__:string] : Operation[] }
+    tags = lo.mapValues(tags, value => {
+      let uniq = {}
+      value.forEach(v => {
+        if (!v.operationId) {
+          if (opts.failOnMissingOperationId) {
+            throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
+          } else {
+            const oid = generateOperationId(v.__path__, v.__verb__)
+            console.info(
+              `operationId missing for route ${v.__verb__.toUpperCase()} ${
+                v.__path__
+              }. Generated name ${oid} from path.`
+            )
+            v.operationId = oid
+          }
+        }
+        uniq[v.operationId] = v
+      })
+      return lo.values(uniq)
     })
-  )
 
-  // -----------------------
+  
+    const compiledTemplate = lo.template(opts.templateString)
+    const tagsPairs = lo.toPairs(tags)
+    await Promise.all(
+      tagsPairs.map(async ([tag, operations]) => {
+        let merged = compiledTemplate({
+          operations,
+          paramsType: this.paramsType.bind(this),
+          responseType: this.responseType.bind(this),
+          strip: this.strip.bind(this),
+          getImportString: this.getImportString.bind(this),
+          commentBlock: this.commentBlock.bind(this),
+          style: opts.moduleStyle
+        })
+        merged = prettier.format(merged, opts.prettierOpts)
+        await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
+      })
+    )    
+  }
 
-  function preNormalize() {
-    Object.keys(swaggerDoc.paths).forEach(pathKey => {
-      const path = swaggerDoc.paths[pathKey]
+
+  preNormalize() {
+    Object.keys(this.swaggerDoc.paths).forEach(pathKey => {
+      const path = this.swaggerDoc.paths[pathKey]
       Object.keys(path).forEach(opKey => {
         if (opKey === "parameters") return
-        if (opts.mapOperation) {
-          path[opKey] = opts.mapOperation(path[opKey], path, pathKey, opKey)
+        if (this.opts.mapOperation) {
+          path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey)
         }
       })
     })
     const mappedDefs = {} as Record<string, JsonSchemaOrg.Draft04.Schema>
-    Object.keys(swaggerDoc.definitions!).forEach(key => {
-      mappedDefs[fixVariableName(key)] = swaggerDoc.definitions![key]
+    Object.keys(this.swaggerDoc.definitions!).forEach(key => {
+      mappedDefs[fixVariableName(key)] = this.swaggerDoc.definitions![key]
     })
-    swaggerDoc.definitions = mappedDefs
+    this.swaggerDoc.definitions = mappedDefs
   }
 
-  function unRef(param) {
+  unRef(param) {
     let path = param.$ref.substr(2).split("/")
-    let found = lo.get(swaggerDoc, path)
+    let found = lo.get(this.swaggerDoc, path)
     return found
   }
 
-  function strip(op: any[]) {
+  strip(op: any[]) {
     return op.map(line => lo.omit(line, "type"))
   }
 
-  function findResponseSchema(operation) {
+  findResponseSchema(operation) {
     let find: any = lo.get(operation, ["responses", "201", "schema"])
     if (!find) find = lo.get(operation, ["responses", "200", "schema"])
     return find
   }
 
-  function commentBlock(operation: Operation) {
+  commentBlock(operation: Operation) {
     const lines = [`${operation.__verb__.toUpperCase()} ${operation.__path__}  `, ""]
     if (operation.description) lines.push(...operation.description.split("\n"))
     return lines.map(line => " * " + line).join("\n")
   }
 
-  function paramsType(operation: Operation) {
+  
+  paramsType(operation: Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
     let count = 0
@@ -221,7 +227,7 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
       if (param.schema) {
         param.type = param.schema
       }
-      const generatedType = typegen.typeTemplate(
+      const generatedType = this.typegen.typeTemplate(
         param,
         operation.operationId + ":params",
         true
@@ -235,12 +241,29 @@ export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
     return out
   }
 
-  function responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
-    let find = findResponseSchema(operation)
+
+  responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
+    let find = this.findResponseSchema(operation)
     if (!find) return "void"
-    const generatedType = typegen.typeTemplate(find, operation.operationId + ":response", true)
+    const generatedType = this.typegen.typeTemplate(find, operation.operationId + ":response", true)
     return generatedType.data.join("\n")
   }
+
+  getImportString(i: { variable: string; module: string; style: "commonjs" | "esm" }) {
+    if (i.style === "commonjs") {
+      return `import ${i.variable} = require('${i.module}')`
+    } else {
+      return `import * as ${i.variable} from '${i.module}'`
+    }
+  }  
+
+}
+
+export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
+
+  const instance = new GenPathsClass(swaggerDoc, opts)
+  return instance.run()
+
 }
 
 function camelCased(tag: string) {
@@ -250,14 +273,6 @@ function camelCased(tag: string) {
       return out
     })
     .reduce((a, b) => a + b, "")
-}
-
-function getImportString(i: { variable: string; module: string; style: "commonjs" | "esm" }) {
-  if (i.style === "commonjs") {
-    return `import ${i.variable} = require('${i.module}')`
-  } else {
-    return `import * as ${i.variable} from '${i.module}'`
-  }
 }
 
 const defaultTemplateStr = `<%=getImportString({ variable: 'ApiCommon', module: '../api-common', style: style }) %>

@@ -14,18 +14,25 @@ async function run() {
     })
   })
 
-  // await tap.test("uber", async t => {
-  //   await tstemplate.genPaths(uber, {
-  //     output: path.resolve(__dirname, "output", "uber"),
-  //     typesOpts: { hideComments: true },
-  //     moduleStyle: "esm"
-  //   })
-  // })
+  await tap.test("uber", async t => {
+    await tstemplate.genPaths(uber, {
+      output: path.resolve(__dirname, "output", "uber"),
+      typesOpts: { hideComments: true },
+      moduleStyle: "esm"
+    })
+  })
 
-  // await tap.test("spring", async t => {
-  //   await tstemplate.genPaths(spring, {
-  //     output: path.resolve(__dirname, "output", "spring"),
-  //     typesOpts: { hideComments: true },
+  await tap.test("spring", async t => {
+    await tstemplate.genPaths(spring, {
+      output: path.resolve(__dirname, "output", "spring"),
+      typesOpts: { hideComments: true },
+      moduleStyle: "esm"
+    })
+  })
+
+  // await tap.test("empty", async t => {
+  //   await tstemplate.genPaths(null, {
+  //     output: path.resolve(__dirname, "output", "empty"),
   //     moduleStyle: "esm"
   //   })
   // })
