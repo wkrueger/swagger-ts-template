@@ -11,9 +11,11 @@ export class TypeTemplate {
     public definitionRoot: string,
     public mainDoc: SwaggerDoc,
     public refPrefix: string = ""
-  ) {}
+  ) {
+    this.mapVariableName = opts.mapVariableName || (s => s)
+  }
 
-  mapVariableName = this.opts.mapVariableName || (s => s)
+  mapVariableName: (s: string) => string
 
   typeTemplate(
     swaggerType: SwaggerType | string,

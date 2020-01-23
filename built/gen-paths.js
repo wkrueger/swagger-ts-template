@@ -23,19 +23,39 @@ class GenPathsClass {
     constructor(swaggerDoc, opts) {
         this.swaggerDoc = swaggerDoc;
         this.opts = opts;
+        if (!opts.output)
+            throw Error("Missing parameter: output.");
+        opts.moduleStyle = opts.moduleStyle || "commonjs";
+        opts.templateString = opts.templateString || defaultTemplateStr;
+        opts.mapOperation = opts.mapOperation || defaultMapOperation;
+        opts.prettierOpts = opts.prettierOpts || gen_types_1.defaultPrettierOpts;
+        opts.typesOpts = Object.assign(Object.assign({}, (opts.typesOpts || {})), { prettierOpts: opts.prettierOpts });
+        this.preNormalize();
         this.typegen = new type_template_1.TypeTemplate(this.opts.typesOpts, "definitions", this.swaggerDoc, "Types.");
+    }
+    preNormalize() {
+        this.swaggerDoc = this.swaggerDoc || {};
+        this.swaggerDoc.definitions = this.swaggerDoc.definitions || {};
+        this.swaggerDoc.paths = this.swaggerDoc.paths || {};
+        Object.keys(this.swaggerDoc.paths).forEach(pathKey => {
+            const path = this.swaggerDoc.paths[pathKey];
+            Object.keys(path).forEach(opKey => {
+                if (opKey === "parameters")
+                    return;
+                if (this.opts.mapOperation) {
+                    path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey);
+                }
+            });
+        });
+        const mappedDefs = {};
+        Object.keys(this.swaggerDoc.definitions).forEach(key => {
+            mappedDefs[gen_types_1.fixVariableName(key)] = this.swaggerDoc.definitions[key];
+        });
+        this.swaggerDoc.definitions = mappedDefs;
     }
     run() {
         return __awaiter(this, void 0, void 0, function* () {
             const { swaggerDoc, opts } = this;
-            if (!opts.output)
-                throw Error("Missing parameter: output.");
-            opts.moduleStyle = opts.moduleStyle || "commonjs";
-            opts.templateString = opts.templateString || defaultTemplateStr;
-            opts.mapOperation = opts.mapOperation || defaultMapOperation;
-            opts.prettierOpts = opts.prettierOpts || gen_types_1.defaultPrettierOpts;
-            opts.typesOpts = Object.assign(Object.assign({}, (opts.typesOpts || {})), { prettierOpts: opts.prettierOpts });
-            this.preNormalize();
             yield util_1.promisify(rimraf)(opts.output);
             yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
             yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
@@ -130,7 +150,7 @@ class GenPathsClass {
                 });
                 return lo.values(uniq);
             });
-            const compiledTemplate = lo.template(opts.templateString);
+            const compiledTemplate = lo.template(this.opts.templateString);
             const tagsPairs = lo.toPairs(tags);
             yield Promise.all(tagsPairs.map(([tag, operations]) => __awaiter(this, void 0, void 0, function* () {
                 let merged = compiledTemplate({
@@ -146,23 +166,6 @@ class GenPathsClass {
                 yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
             })));
         });
-    }
-    preNormalize() {
-        Object.keys(this.swaggerDoc.paths).forEach(pathKey => {
-            const path = this.swaggerDoc.paths[pathKey];
-            Object.keys(path).forEach(opKey => {
-                if (opKey === "parameters")
-                    return;
-                if (this.opts.mapOperation) {
-                    path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey);
-                }
-            });
-        });
-        const mappedDefs = {};
-        Object.keys(this.swaggerDoc.definitions).forEach(key => {
-            mappedDefs[gen_types_1.fixVariableName(key)] = this.swaggerDoc.definitions[key];
-        });
-        this.swaggerDoc.definitions = mappedDefs;
     }
     unRef(param) {
         let path = param.$ref.substr(2).split("/");
@@ -298,7 +301,7 @@ exports.generateOperationId = generateOperationId;
 function generateOperationTag(pathKey) {
     const found = pathKey.match(/^\/\w+/);
     if (!found)
-        return 'unknown';
+        return "unknown";
     return found[0].substr(1);
 }
 exports.generateOperationTag = generateOperationTag;

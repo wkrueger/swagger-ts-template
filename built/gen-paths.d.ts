@@ -16,12 +16,12 @@ declare type genPathsOpts = {
     prettierOpts?: prettier.Options;
 };
 export declare class GenPathsClass {
-    swaggerDoc: SwaggerDoc;
+    private swaggerDoc;
     opts: genPathsOpts;
     constructor(swaggerDoc: SwaggerDoc, opts: genPathsOpts);
     typegen: TypeTemplate;
-    run(): Promise<void>;
     preNormalize(): void;
+    run(): Promise<void>;
     unRef(param: any): unknown;
     strip(op: any[]): {}[];
     findResponseSchema(operation: any): any;

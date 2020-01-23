@@ -11,20 +11,14 @@ export interface genTypesOpts {
   prettierOpts?: prettier.Options
 }
 export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) {
-  //ts formatter requires a file
-  //TODO use prettier
   const mapVariableName = opts.mapVariableName || (s => s)
-  const definitionRoot = "definitions"
 
   let external = opts.external ? "export " : ""
-  if (!Object.keys(swaggerDoc[definitionRoot] || {}).length) {
-    throw Error("No definition found in " + definitionRoot)
-  }
   let list: { name; def }[] = []
-  for (let _name in swaggerDoc[definitionRoot]) {
+  for (let _name in swaggerDoc.definitions) {
     list.push({
       name: _name,
-      def: swaggerDoc[definitionRoot]![_name]
+      def: swaggerDoc.definitions[_name]
     })
   }
   list.sort((i1, i2) => {
@@ -32,7 +26,7 @@ export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) 
     return i2.name - i1.name
   })
 
-  const typeTemplateGen = new TypeTemplate(opts, definitionRoot, swaggerDoc)
+  const typeTemplateGen = new TypeTemplate(opts, "definitions", swaggerDoc)
 
   let out = ""
   list.forEach(item => {

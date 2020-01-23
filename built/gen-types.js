@@ -13,19 +13,13 @@ const type_template_1 = require("./type-template");
 const prettier = require("prettier");
 function genTypes(swaggerDoc, opts = {}) {
     return __awaiter(this, void 0, void 0, function* () {
-        //ts formatter requires a file
-        //TODO use prettier
         const mapVariableName = opts.mapVariableName || (s => s);
-        const definitionRoot = "definitions";
         let external = opts.external ? "export " : "";
-        if (!Object.keys(swaggerDoc[definitionRoot] || {}).length) {
-            throw Error("No definition found in " + definitionRoot);
-        }
         let list = [];
-        for (let _name in swaggerDoc[definitionRoot]) {
+        for (let _name in swaggerDoc.definitions) {
             list.push({
                 name: _name,
-                def: swaggerDoc[definitionRoot][_name]
+                def: swaggerDoc.definitions[_name]
             });
         }
         list.sort((i1, i2) => {
@@ -33,7 +27,7 @@ function genTypes(swaggerDoc, opts = {}) {
                 return 0;
             return i2.name - i1.name;
         });
-        const typeTemplateGen = new type_template_1.TypeTemplate(opts, definitionRoot, swaggerDoc);
+        const typeTemplateGen = new type_template_1.TypeTemplate(opts, "definitions", swaggerDoc);
         let out = "";
         list.forEach(item => {
             let def = item.def;

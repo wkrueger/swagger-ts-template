@@ -33,12 +33,7 @@ type genPathsOpts = {
 }
 
 export class GenPathsClass {
-
-  constructor(public swaggerDoc: SwaggerDoc, public opts: genPathsOpts) {}
-  typegen = new TypeTemplate(this.opts.typesOpts!, "definitions", this.swaggerDoc, "Types.")
-
-  async run() {
-    const {swaggerDoc, opts} = this
+  constructor(private swaggerDoc: SwaggerDoc, public opts: genPathsOpts) {
     if (!opts.output) throw Error("Missing parameter: output.")
     opts.moduleStyle = opts.moduleStyle || "commonjs"
     opts.templateString = opts.templateString || defaultTemplateStr
@@ -46,7 +41,33 @@ export class GenPathsClass {
     opts.prettierOpts = opts.prettierOpts || defaultPrettierOpts
     opts.typesOpts = { ...(opts.typesOpts || {}), prettierOpts: opts.prettierOpts }
     this.preNormalize()
-  
+    this.typegen = new TypeTemplate(this.opts.typesOpts!, "definitions", this.swaggerDoc, "Types.")
+  }
+  typegen: TypeTemplate
+
+  preNormalize() {
+    this.swaggerDoc = this.swaggerDoc || {}
+    this.swaggerDoc.definitions = this.swaggerDoc.definitions || {}
+    this.swaggerDoc.paths = this.swaggerDoc.paths || {}
+
+    Object.keys(this.swaggerDoc.paths).forEach(pathKey => {
+      const path = this.swaggerDoc.paths[pathKey]
+      Object.keys(path).forEach(opKey => {
+        if (opKey === "parameters") return
+        if (this.opts.mapOperation) {
+          path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey)
+        }
+      })
+    })
+    const mappedDefs = {} as Record<string, JsonSchemaOrg.Draft04.Schema>
+    Object.keys(this.swaggerDoc.definitions!).forEach(key => {
+      mappedDefs[fixVariableName(key)] = this.swaggerDoc.definitions![key]
+    })
+    this.swaggerDoc.definitions = mappedDefs
+  }
+
+  async run() {
+    const { swaggerDoc, opts } = this
     await promisify(rimraf)(opts.output)
     await promisify(mkdirp as any)(path.resolve(opts.output, "modules"))
     await promisify(cp)(
@@ -59,7 +80,7 @@ export class GenPathsClass {
       ...(opts.typesOpts || {})
     })
     await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
-  
+
     // - groups operations by tags
     // - "copies down" metadata which were present on higher ranks of the Doc to the scope
     // of each operation.
@@ -97,7 +118,7 @@ export class GenPathsClass {
             ]
               .map(p => {
                 if (p.$ref) p = this.unRef(p)
-  
+
                 if (p.schema) {
                   p.type = p.schema
                 }
@@ -110,7 +131,7 @@ export class GenPathsClass {
                 return out
               }, {})
             params = lo.values(params)
-  
+
             operation["__mergedParameters__"] = params
             return operation
           })
@@ -121,7 +142,7 @@ export class GenPathsClass {
         return [...out, ...curr]
       }, []) // [ Operation ] __tag__ : string[]
       .value()
-  
+
     tags = tags.reduce((out, operation) => {
       let spread = operation.__tag__.map(tag => {
         return { ...operation, __tag__: tag }
@@ -150,8 +171,7 @@ export class GenPathsClass {
       return lo.values(uniq)
     })
 
-  
-    const compiledTemplate = lo.template(opts.templateString)
+    const compiledTemplate = lo.template(this.opts.templateString!)
     const tagsPairs = lo.toPairs(tags)
     await Promise.all(
       tagsPairs.map(async ([tag, operations]) => {
@@ -167,25 +187,7 @@ export class GenPathsClass {
         merged = prettier.format(merged, opts.prettierOpts)
         await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
       })
-    )    
-  }
-
-
-  preNormalize() {
-    Object.keys(this.swaggerDoc.paths).forEach(pathKey => {
-      const path = this.swaggerDoc.paths[pathKey]
-      Object.keys(path).forEach(opKey => {
-        if (opKey === "parameters") return
-        if (this.opts.mapOperation) {
-          path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey)
-        }
-      })
-    })
-    const mappedDefs = {} as Record<string, JsonSchemaOrg.Draft04.Schema>
-    Object.keys(this.swaggerDoc.definitions!).forEach(key => {
-      mappedDefs[fixVariableName(key)] = this.swaggerDoc.definitions![key]
-    })
-    this.swaggerDoc.definitions = mappedDefs
+    )
   }
 
   unRef(param) {
@@ -210,7 +212,6 @@ export class GenPathsClass {
     return lines.map(line => " * " + line).join("\n")
   }
 
-  
   paramsType(operation: Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
@@ -241,7 +242,6 @@ export class GenPathsClass {
     return out
   }
 
-
   responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
     let find = this.findResponseSchema(operation)
     if (!find) return "void"
@@ -255,15 +255,12 @@ export class GenPathsClass {
     } else {
       return `import * as ${i.variable} from '${i.module}'`
     }
-  }  
-
+  }
 }
 
 export async function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts) {
-
   const instance = new GenPathsClass(swaggerDoc, opts)
   return instance.run()
-
 }
 
 function camelCased(tag: string) {
@@ -325,6 +322,6 @@ export function generateOperationId(pathKey: string, methodKey: string) {
 
 export function generateOperationTag(pathKey: string) {
   const found = pathKey.match(/^\/\w+/)
-  if (!found) return 'unknown'
-  return found[0].substr(1);
+  if (!found) return "unknown"
+  return found[0].substr(1)
 }

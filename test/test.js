@@ -30,12 +30,12 @@ async function run() {
     })
   })
 
-  // await tap.test("empty", async t => {
-  //   await tstemplate.genPaths(null, {
-  //     output: path.resolve(__dirname, "output", "empty"),
-  //     moduleStyle: "esm"
-  //   })
-  // })
+  await tap.test("empty", async t => {
+    await tstemplate.genPaths(null, {
+      output: path.resolve(__dirname, "output", "empty"),
+      moduleStyle: "esm"
+    })
+  })
 }
 
 run()

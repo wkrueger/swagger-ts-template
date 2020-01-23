@@ -9,7 +9,7 @@ class TypeTemplate {
         this.definitionRoot = definitionRoot;
         this.mainDoc = mainDoc;
         this.refPrefix = refPrefix;
-        this.mapVariableName = this.opts.mapVariableName || (s => s);
+        this.mapVariableName = opts.mapVariableName || (s => s);
     }
     typeTemplate(swaggerType, path, embraceObjects = false) {
         if (typeof swaggerType === "string") {
