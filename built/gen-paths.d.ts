@@ -24,18 +24,24 @@ export declare class GenPathsClass {
     run(): Promise<void>;
     unRef(param: any): unknown;
     strip(op: any[]): {}[];
+    /** response types may lie in different places... */
     findResponseSchema(operation: any): any;
+    /** operation comment block, string, merged into template */
     commentBlock(operation: Operation): string;
+    /** parameters type, string, merged into template */
     paramsType(operation: Operation): string;
+    /** response type, string, merged into template */
     responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation): string;
     getImportString(i: {
         variable: string;
         module: string;
         style: "commonjs" | "esm";
     }): string;
+    /** generates operationId when it is missing */
+    generateOperationId(pathKey: string, methodKey: string): string;
+    /** generates operation tag when it is missing */
+    generateOperationTag(pathKey: string): string;
 }
 export declare function genPaths(swaggerDoc: SwaggerDoc, opts: genPathsOpts): Promise<void>;
 export declare function defaultMapOperation(o: Operation): Operation;
-export declare function generateOperationId(pathKey: string, methodKey: string): string;
-export declare function generateOperationTag(pathKey: string): string;
 export {};

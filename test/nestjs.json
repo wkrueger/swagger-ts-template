@@ -1,0 +1,282 @@
+{
+  "openapi": "3.0.0",
+  "info": { "title": "geostore", "description": "", "version": "1.0.0", "contact": {} },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "CreateStoreDto": {
+        "type": "object",
+        "properties": { "code": { "type": "string" }, "label": { "type": "string" } },
+        "required": ["code", "label"]
+      },
+      "Dataset": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "store": { "type": "object" },
+          "operation": { "type": "object" },
+          "media": { "type": "object" },
+          "createdAt": { "format": "date-time", "type": "string" },
+          "extent": { "type": "string" }
+        },
+        "required": ["id", "store", "operation", "media", "createdAt"]
+      },
+      "Store": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "code": { "type": "string" },
+          "label": { "type": "string" },
+          "projectionCode": { "type": "string" },
+          "datasets": {
+            "default": [],
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Dataset" }
+          }
+        },
+        "required": ["id", "code", "label", "datasets"]
+      },
+      "StoreQueryDto": {
+        "type": "object",
+        "properties": {
+          "datasetId": { "type": "number" },
+          "storeId": { "type": "number" },
+          "storeCode": { "type": "string" },
+          "intersectsGeometry": { "type": "object" },
+          "limit": { "type": "number" },
+          "offset": { "type": "number" }
+        }
+      },
+      "CreateLayerDto": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "code": { "type": "string" },
+          "dataset": { "type": "number" },
+          "classes": { "type": "string" }
+        },
+        "required": ["dataset", "classes"]
+      },
+      "CreateMapfileDto": {
+        "type": "object",
+        "properties": {
+          "label": { "type": "string" },
+          "layers": { "type": "array", "items": { "$ref": "#/components/schemas/CreateLayerDto" } },
+          "customTemplate": { "type": "string" }
+        },
+        "required": ["label", "layers"]
+      },
+      "Mapfile": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "number" },
+          "label": { "type": "string" },
+          "layers": { "default": { "initialized": true, "dirty": false }, "type": "object" },
+          "customTemplate": { "type": "string" }
+        },
+        "required": ["id", "label", "layers"]
+      }
+    }
+  },
+  "paths": {
+    "/stores": {
+      "post": {
+        "operationId": "StoreController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateStoreDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Store" } }
+            }
+          }
+        },
+        "tags": ["stores"]
+      },
+      "get": {
+        "operationId": "StoreController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Store" } }
+              }
+            }
+          }
+        },
+        "tags": ["stores"]
+      }
+    },
+    "/stores/query": {
+      "post": {
+        "operationId": "StoreController_query",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/StoreQueryDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "type": "array", "items": { "type": "object" } } }
+            }
+          }
+        },
+        "tags": ["stores"]
+      }
+    },
+    "/stores/{id}": {
+      "delete": {
+        "operationId": "StoreController_remove",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["stores"]
+      }
+    },
+    "/datasets": {
+      "post": {
+        "operationId": "DatasetController_create",
+        "summary": "",
+        "description": "Requires a multipart body with fields:\n  - storeCode: the string code of the target store\n  - file: a geoPackage. First dataset will be taken\n\nCurrently requires and assumes EPSG:4326 projection.\n",
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Dataset" } }
+            }
+          }
+        },
+        "tags": ["datasets"]
+      },
+      "get": {
+        "operationId": "DatasetController_list",
+        "parameters": [
+          { "name": "id", "required": true, "in": "query", "schema": { "type": "number" } },
+          { "name": "store", "required": true, "in": "query", "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Dataset" } }
+              }
+            }
+          }
+        },
+        "tags": ["datasets"]
+      }
+    },
+    "/datasets/{id}": {
+      "delete": {
+        "operationId": "DatasetController_remove",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["datasets"]
+      }
+    },
+    "/mapfiles": {
+      "post": {
+        "operationId": "MapfileController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateMapfileDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Mapfile" } }
+            }
+          }
+        },
+        "tags": ["mapfiles"]
+      },
+      "get": {
+        "operationId": "MapfileController_list",
+        "parameters": [
+          { "name": "id", "required": true, "in": "query", "schema": { "type": "number" } }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Mapfile" } }
+              }
+            }
+          }
+        },
+        "tags": ["mapfiles"]
+      }
+    },
+    "/mapfiles/{id}": {
+      "put": {
+        "operationId": "MapfileController_put",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateMapfileDto" } }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Mapfile" } }
+            }
+          }
+        },
+        "tags": ["mapfiles"]
+      },
+      "delete": {
+        "operationId": "MapfileController_remove",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["mapfiles"]
+      }
+    },
+    "/mapfiles/{id}/render": {
+      "get": {
+        "operationId": "MapfileController_render",
+        "parameters": [
+          { "name": "id", "required": true, "in": "path", "schema": { "type": "number" } }
+        ],
+        "responses": { "200": { "description": "" } },
+        "tags": ["mapfiles"]
+      }
+    },
+    "/migrations": {
+      "post": {
+        "operationId": "MigrationsController_run",
+        "parameters": [],
+        "responses": { "201": { "description": "" } }
+      }
+    }
+  }
+}

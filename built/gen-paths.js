@@ -64,6 +64,7 @@ class GenPathsClass {
             // - groups operations by tags
             // - "copies down" metadata which were present on higher ranks of the Doc to the scope
             // of each operation.
+            // FIXME: cryptic code. Lodash chain bad.
             let tags = lo
                 .chain(swaggerDoc.paths)
                 .toPairs()
@@ -79,7 +80,7 @@ class GenPathsClass {
                             continue;
                         let operation = schema[verb];
                         if (!((_a = operation.tags) === null || _a === void 0 ? void 0 : _a.length)) {
-                            operation.tags = [generateOperationTag(path)];
+                            operation.tags = [this.generateOperationTag(path)];
                         }
                         out.push(...(operation.tags || []).map(camelCased));
                     }
@@ -141,7 +142,7 @@ class GenPathsClass {
                             throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`);
                         }
                         else {
-                            const oid = generateOperationId(v.__path__, v.__verb__);
+                            const oid = this.generateOperationId(v.__path__, v.__verb__);
                             console.info(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}. Generated name ${oid} from path.`);
                             v.operationId = oid;
                         }
@@ -175,18 +176,27 @@ class GenPathsClass {
     strip(op) {
         return op.map(line => lo.omit(line, "type"));
     }
+    /** response types may lie in different places... */
     findResponseSchema(operation) {
-        let find = lo.get(operation, ["responses", "201", "schema"]);
-        if (!find)
-            find = lo.get(operation, ["responses", "200", "schema"]);
-        return find;
+        var _a, _b;
+        let traversing = operation.responses;
+        if (!traversing)
+            return;
+        traversing = traversing[201] || traversing[200];
+        if (!traversing)
+            return;
+        if (traversing.schema)
+            return traversing.schema;
+        return (_b = (_a = traversing.content) === null || _a === void 0 ? void 0 : _a["application/json"]) === null || _b === void 0 ? void 0 : _b.schema;
     }
+    /** operation comment block, string, merged into template */
     commentBlock(operation) {
         const lines = [`${operation.__verb__.toUpperCase()} ${operation.__path__}  `, ""];
         if (operation.description)
             lines.push(...operation.description.split("\n"));
         return lines.map(line => " * " + line).join("\n");
     }
+    /** parameters type, string, merged into template */
     paramsType(operation) {
         let params = operation["__mergedParameters__"];
         let out = "{";
@@ -217,6 +227,7 @@ class GenPathsClass {
         out += "}";
         return out;
     }
+    /** response type, string, merged into template */
     responseType(operation) {
         let find = this.findResponseSchema(operation);
         if (!find)
@@ -231,6 +242,32 @@ class GenPathsClass {
         else {
             return `import * as ${i.variable} from '${i.module}'`;
         }
+    }
+    /** generates operationId when it is missing */
+    generateOperationId(pathKey, methodKey) {
+        const pre = pathKey
+            .split("/")
+            .slice(1)
+            .map((expr, idx, list) => {
+            if (expr.startsWith("{"))
+                return "";
+            const next = list[idx + 1];
+            if (next && next.startsWith("{")) {
+                return expr.substr(0, expr.length - 1);
+            }
+            return expr;
+        })
+            .join("_");
+        const camel = lo.camelCase(methodKey + "_" + pre);
+        console.log(camel);
+        return camel;
+    }
+    /** generates operation tag when it is missing */
+    generateOperationTag(pathKey) {
+        const found = pathKey.match(/^\/\w+/);
+        if (!found)
+            return "unknown";
+        return found[0].substr(1);
     }
 }
 exports.GenPathsClass = GenPathsClass;
@@ -279,30 +316,4 @@ function defaultMapOperation(o) {
     return o;
 }
 exports.defaultMapOperation = defaultMapOperation;
-function generateOperationId(pathKey, methodKey) {
-    const pre = pathKey
-        .split("/")
-        .slice(1)
-        .map((expr, idx, list) => {
-        if (expr.startsWith("{"))
-            return "";
-        const next = list[idx + 1];
-        if (next && next.startsWith("{")) {
-            return expr.substr(0, expr.length - 1);
-        }
-        return expr;
-    })
-        .join("_");
-    const camel = lo.camelCase(methodKey + "_" + pre);
-    console.log(camel);
-    return camel;
-}
-exports.generateOperationId = generateOperationId;
-function generateOperationTag(pathKey) {
-    const found = pathKey.match(/^\/\w+/);
-    if (!found)
-        return "unknown";
-    return found[0].substr(1);
-}
-exports.generateOperationTag = generateOperationTag;
 //# sourceMappingURL=gen-paths.js.map

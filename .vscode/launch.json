@@ -7,7 +7,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "Launch Program",
+      "name": "Test",
       "program": "${workspaceFolder}/test/test.js",
       "console": "integratedTerminal"
     }

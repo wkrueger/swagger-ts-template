@@ -84,6 +84,7 @@ export class GenPathsClass {
     // - groups operations by tags
     // - "copies down" metadata which were present on higher ranks of the Doc to the scope
     // of each operation.
+    // FIXME: cryptic code. Lodash chain bad.
     let tags: any = lo
       .chain(swaggerDoc.paths)
       .toPairs<Values<typeof swaggerDoc.paths>>()
@@ -97,7 +98,7 @@ export class GenPathsClass {
             if (verb === "parameters") continue
             let operation: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
             if (!operation.tags?.length) {
-              operation.tags = [generateOperationTag(path)]
+              operation.tags = [this.generateOperationTag(path)]
             }
             out.push(...(operation.tags || []).map(camelCased))
           }
@@ -157,7 +158,7 @@ export class GenPathsClass {
           if (opts.failOnMissingOperationId) {
             throw Error(`operationId missing for route ${v.__verb__.toUpperCase()} ${v.__path__}`)
           } else {
-            const oid = generateOperationId(v.__path__, v.__verb__)
+            const oid = this.generateOperationId(v.__path__, v.__verb__)
             console.info(
               `operationId missing for route ${v.__verb__.toUpperCase()} ${
                 v.__path__
@@ -200,18 +201,24 @@ export class GenPathsClass {
     return op.map(line => lo.omit(line, "type"))
   }
 
+  /** response types may lie in different places... */
   findResponseSchema(operation) {
-    let find: any = lo.get(operation, ["responses", "201", "schema"])
-    if (!find) find = lo.get(operation, ["responses", "200", "schema"])
-    return find
+    let traversing = operation.responses
+    if (!traversing) return
+    traversing = traversing[201] || traversing[200]
+    if (!traversing) return
+    if (traversing.schema) return traversing.schema
+    return traversing.content?.["application/json"]?.schema
   }
 
+  /** operation comment block, string, merged into template */
   commentBlock(operation: Operation) {
     const lines = [`${operation.__verb__.toUpperCase()} ${operation.__path__}  `, ""]
     if (operation.description) lines.push(...operation.description.split("\n"))
     return lines.map(line => " * " + line).join("\n")
   }
 
+  /** parameters type, string, merged into template */
   paramsType(operation: Operation) {
     let params = operation["__mergedParameters__"]
     let out = "{"
@@ -242,6 +249,7 @@ export class GenPathsClass {
     return out
   }
 
+  /** response type, string, merged into template */
   responseType(operation: SwaggerIo.V2.SchemaJson.Definitions.Operation) {
     let find = this.findResponseSchema(operation)
     if (!find) return "void"
@@ -255,6 +263,32 @@ export class GenPathsClass {
     } else {
       return `import * as ${i.variable} from '${i.module}'`
     }
+  }
+
+  /** generates operationId when it is missing */
+  generateOperationId(pathKey: string, methodKey: string) {
+    const pre = pathKey
+      .split("/")
+      .slice(1)
+      .map((expr, idx, list) => {
+        if (expr.startsWith("{")) return ""
+        const next = list[idx + 1]
+        if (next && next.startsWith("{")) {
+          return expr.substr(0, expr.length - 1)
+        }
+        return expr
+      })
+      .join("_")
+    const camel = lo.camelCase(methodKey + "_" + pre)
+    console.log(camel)
+    return camel
+  }
+
+  /** generates operation tag when it is missing */
+  generateOperationTag(pathKey: string) {
+    const found = pathKey.match(/^\/\w+/)
+    if (!found) return "unknown"
+    return found[0].substr(1)
   }
 }
 
@@ -300,28 +334,4 @@ export function defaultMapOperation(o: Operation) {
   if (!o.operationId) return o
   o.operationId = fixVariableName(o.operationId!)
   return o
-}
-
-export function generateOperationId(pathKey: string, methodKey: string) {
-  const pre = pathKey
-    .split("/")
-    .slice(1)
-    .map((expr, idx, list) => {
-      if (expr.startsWith("{")) return ""
-      const next = list[idx + 1]
-      if (next && next.startsWith("{")) {
-        return expr.substr(0, expr.length - 1)
-      }
-      return expr
-    })
-    .join("_")
-  const camel = lo.camelCase(methodKey + "_" + pre)
-  console.log(camel)
-  return camel
-}
-
-export function generateOperationTag(pathKey: string) {
-  const found = pathKey.match(/^\/\w+/)
-  if (!found) return "unknown"
-  return found[0].substr(1)
 }

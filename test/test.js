@@ -3,6 +3,7 @@ const tstemplate = require("../built/main")
 const sendgrid = require("./sendgrid.json")
 const uber = require("./uber.json")
 const spring = require("./spring.json")
+const nestjs = require("./nestjs.json")
 const path = require("path")
 
 async function run() {
@@ -33,6 +34,13 @@ async function run() {
   await tap.test("empty", async t => {
     await tstemplate.genPaths(null, {
       output: path.resolve(__dirname, "output", "empty"),
+      moduleStyle: "esm"
+    })
+  })
+
+  await tap.test("nestjs", async t => {
+    await tstemplate.genPaths(nestjs, {
+      output: path.resolve(__dirname, "output", "nestjs"),
       moduleStyle: "esm"
     })
   })
