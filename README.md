@@ -139,6 +139,7 @@ See also the `samples` path in this repo.
 - The input parameters from `genPaths` may be used to tweak the generation a bit; Most notably, you can remap the operation objects to do things such as renaming methods;
 - You can extend the request and response types by augmenting either
   `GApiCommon#MergeToRequest` or `GApiCommon#MergeToResponse` global interfaces.
+- You can extend the source classes to override something...
 
 ```ts
 declare global {
