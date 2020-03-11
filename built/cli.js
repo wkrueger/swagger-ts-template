@@ -28,7 +28,7 @@ if (action === "types") {
             process.exit(1);
         }
         generator
-            .genTypes(parsed, {
+            .genTypes(parsed, ["#/definitions"], {
             hideComments: yargs.argv.c !== undefined,
             external: yargs.argv.e !== undefined
         })

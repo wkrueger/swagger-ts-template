@@ -30,7 +30,10 @@ export const GET_v3_scopes_requests = ApiCommon.requestMaker<
   id: "GET_v3_scopes_requests",
   path: "/scopes/requests",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "offset", in: "query" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "offset", in: "query" }
+  ]
 })
 
 export type DELETE_v3_scopes_requests_request_id_Type = {
@@ -217,7 +220,10 @@ export const GET_v3_teammates = ApiCommon.requestMaker<
   id: "GET_v3_teammates",
   path: "/teammates",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "offset", in: "query" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "offset", in: "query" }
+  ]
 })
 
 export type GET_v3_teammates_username_Type = {
@@ -297,7 +303,10 @@ export const PATCH_v3_teammates_username = ApiCommon.requestMaker<
   id: "PATCH_v3_teammates_username",
   path: "/teammates/{username}",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "username", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "username", required: true, in: "path" }
+  ]
 })
 
 export type DELETE_v3_teammates_username_Type = {

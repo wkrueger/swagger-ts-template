@@ -68,7 +68,10 @@ export const DELETE_suppression_spam_reports = ApiCommon.requestMaker<
   id: "DELETE_suppression_spam_reports",
   path: "/suppression/spam_reports",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_suppression_spam_reports_email_Type = {

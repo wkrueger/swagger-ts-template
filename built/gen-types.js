@@ -11,17 +11,18 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 const type_template_1 = require("./type-template");
 const prettier = require("prettier");
-function genTypes(swaggerDoc, opts = {}) {
+const lo = require("lodash");
+function genTypes(swaggerDoc, lookupPaths, opts = {}) {
     return __awaiter(this, void 0, void 0, function* () {
         const mapVariableName = opts.mapVariableName || (s => s);
+        lookupPaths = lo.uniq(lookupPaths);
         let external = opts.external ? "export " : "";
         let list = [];
-        for (let _name in swaggerDoc.definitions) {
-            list.push({
-                name: _name,
-                def: swaggerDoc.definitions[_name]
-            });
+        for (let _path of lookupPaths) {
+            const split = _path.split(/\//g).filter(x => x !== "#");
+            lookupPath(swaggerDoc, split, list);
         }
+        list = lo.uniqBy(list, x => x.srcPath);
         list.sort((i1, i2) => {
             if (i1.name == i2.name)
                 return 0;
@@ -56,4 +57,19 @@ exports.defaultPrettierOpts = {
     printWidth: 100,
     parser: "typescript"
 };
+function lookupPath(doc, path, list = []) {
+    var _a, _b, _c, _d;
+    const found = lo.get(doc, path);
+    if (typeof found !== "object")
+        return;
+    if (((_a = found) === null || _a === void 0 ? void 0 : _a.type) || ((_b = found) === null || _b === void 0 ? void 0 : _b.allOf) || ((_c = found) === null || _c === void 0 ? void 0 : _c.$ref) || ((_d = found) === null || _d === void 0 ? void 0 : _d.anyOf)) {
+        list.push({ name: path[path.length - 1], def: found, srcPath: path.join(".") });
+    }
+    else {
+        Object.keys(found).forEach(key => {
+            const toSearch = [...path, key];
+            lookupPath(doc, toSearch, list);
+        });
+    }
+}
 //# sourceMappingURL=gen-types.js.map

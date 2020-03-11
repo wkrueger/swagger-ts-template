@@ -28,7 +28,10 @@ export const GET_partner_settings = ApiCommon.requestMaker<
   id: "GET_partner_settings",
   path: "/partner_settings",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "offset", in: "query" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "offset", in: "query" }
+  ]
 })
 
 export type GET_partner_settings_new_relic_Type = {}

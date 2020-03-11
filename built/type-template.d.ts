@@ -8,6 +8,7 @@ export declare class TypeTemplate {
     refPrefix: string;
     constructor(opts: genTypesOpts, definitionRoot: string, mainDoc: SwaggerDoc, refPrefix?: string);
     mapVariableName: (s: string) => string;
+    foundRefs: string[];
     typeTemplate(swaggerType: SwaggerType | string, path: string, embraceObjects?: boolean): {
         type: string;
         data: string[];

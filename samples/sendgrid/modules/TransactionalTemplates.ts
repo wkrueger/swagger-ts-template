@@ -20,7 +20,10 @@ export const POST_templates = ApiCommon.requestMaker<POST_templates_Type, POST_t
   id: "POST_templates",
   path: "/templates",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_templates_Type = {

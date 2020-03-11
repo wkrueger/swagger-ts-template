@@ -55,7 +55,10 @@ export const POST_asm_suppressions_global = ApiCommon.requestMaker<
   id: "POST_asm_suppressions_global",
   path: "/asm/suppressions/global",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_asm_suppressions_global_email_Type = {

@@ -21,7 +21,10 @@ export const POST_contactdb_lists = ApiCommon.requestMaker<
   id: "POST_contactdb_lists",
   path: "/contactdb/lists",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_contactdb_lists_Type = {
@@ -64,7 +67,10 @@ export const DELETE_contactdb_lists = ApiCommon.requestMaker<
   id: "DELETE_contactdb_lists",
   path: "/contactdb/lists",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_contactdb_lists_list_id_Type = {
@@ -86,7 +92,10 @@ export const GET_contactdb_lists_list_id = ApiCommon.requestMaker<
   id: "GET_contactdb_lists_list_id",
   path: "/contactdb/lists/{list_id}",
   verb: "GET",
-  parameters: [{ name: "list_id", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "list_id", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type PATCH_contactdb_lists_list_id_Type = {

@@ -4,9 +4,7 @@ export interface mail_settings_spam_check {
   url?: string
 }
 
-export interface mail_batch_id {
-  batch_id: string
-}
+export interface suppression_group_unsubscribes {}
 
 export interface partner_settings_new_relic {
   enable_subuser_statistics?: boolean
@@ -307,7 +305,9 @@ export interface errors {
   }[]
 }
 
-export interface suppression_group_unsubscribes {}
+export interface ip_pool {
+  name: string
+}
 
 export interface google_analytics_settings {
   enabled?: boolean
@@ -595,6 +595,10 @@ export interface whitelabel__domain {
   }
 }
 
-export interface ip_pool {
-  name: string
+export interface mail_batch_id {
+  batch_id: string
 }
+
+export type trait_onBehalfOfSubuser_on_behalf_of = string
+
+export type trait_authorizationHeader_Authorization = string

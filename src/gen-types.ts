@@ -1,5 +1,6 @@
 import { TypeTemplate } from "./type-template"
 import prettier = require("prettier")
+import lo = require("lodash")
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
 type SwaggerType = SwaggerIo.V2.SchemaJson.Definitions.Schema
@@ -10,17 +11,22 @@ export interface genTypesOpts {
   mapVariableName?: (s: string) => string
   prettierOpts?: prettier.Options
 }
-export async function genTypes(swaggerDoc: SwaggerDoc, opts: genTypesOpts = {}) {
+export async function genTypes(
+  swaggerDoc: SwaggerDoc,
+  lookupPaths: string[],
+  opts: genTypesOpts = {}
+) {
   const mapVariableName = opts.mapVariableName || (s => s)
+  lookupPaths = lo.uniq(lookupPaths)
 
   let external = opts.external ? "export " : ""
-  let list: { name; def }[] = []
-  for (let _name in swaggerDoc.definitions) {
-    list.push({
-      name: _name,
-      def: swaggerDoc.definitions[_name]
-    })
+  let list: { name; def; srcPath }[] = []
+
+  for (let _path of lookupPaths) {
+    const split = _path.split(/\//g).filter(x => x !== "#")
+    lookupPath(swaggerDoc, split, list)
   }
+  list = lo.uniqBy(list, x => x.srcPath)
   list.sort((i1, i2) => {
     if (i1.name == i2.name) return 0
     return i2.name - i1.name
@@ -56,4 +62,17 @@ export const defaultPrettierOpts: prettier.Options = {
   semi: false,
   printWidth: 100,
   parser: "typescript" as "typescript"
+}
+
+function lookupPath(doc: any, path: string[], list = [] as { name; def; srcPath }[]) {
+  const found = lo.get(doc, path) as any
+  if (typeof found !== "object") return
+  if (found?.type || found?.allOf || found?.$ref || found?.anyOf) {
+    list.push({ name: path[path.length - 1], def: found, srcPath: path.join(".") })
+  } else {
+    Object.keys(found).forEach(key => {
+      const toSearch = [...path, key]
+      lookupPath(doc, toSearch, list)
+    })
+  }
 }

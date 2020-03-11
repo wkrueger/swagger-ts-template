@@ -32,7 +32,10 @@ export const GET_access_settings_activity = ApiCommon.requestMaker<
   id: "GET_access_settings_activity",
   path: "/access_settings/activity",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_access_settings_whitelist_Type = {
@@ -95,7 +98,10 @@ export const POST_access_settings_whitelist = ApiCommon.requestMaker<
   id: "POST_access_settings_whitelist",
   path: "/access_settings/whitelist",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type DELETE_access_settings_whitelist_Type = {
@@ -121,7 +127,10 @@ export const DELETE_access_settings_whitelist = ApiCommon.requestMaker<
   id: "DELETE_access_settings_whitelist",
   path: "/access_settings/whitelist",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_access_settings_whitelist_rule_id_Type = {

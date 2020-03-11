@@ -55,5 +55,8 @@ export const PATCH_user_settings_enforced_tls = ApiCommon.requestMaker<
   id: "PATCH_user_settings_enforced_tls",
   path: "/user/settings/enforced_tls",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })

@@ -65,8 +65,8 @@ export abstract class SwaggerRequester {
    * (Response + GApiCommon.MergeToResponse)
    */
   abstract async handler(
-    request: IRequest & GApiCommon.MergeToRequest,
-    input: Record<string, any>,
+    request: IRequest,
+    input: Record<string, any> & GApiCommon.MergeToRequest,
     operation: IOperation
   ): Promise<any>
 }

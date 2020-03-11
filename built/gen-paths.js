@@ -23,6 +23,7 @@ class GenPathsClass {
     constructor(swaggerDoc, opts) {
         this.swaggerDoc = swaggerDoc;
         this.opts = opts;
+        this.lookupPaths = ["#/definitions"];
         if (!opts.output)
             throw Error("Missing parameter: output.");
         opts.moduleStyle = opts.moduleStyle || "commonjs";
@@ -59,8 +60,6 @@ class GenPathsClass {
             yield util_1.promisify(rimraf)(opts.output);
             yield util_1.promisify(mkdirp)(path.resolve(opts.output, "modules"));
             yield util_1.promisify(cp)(path.resolve(__dirname, "..", "src", "api-common.ts"), path.resolve(opts.output, "api-common.ts"));
-            const typesFile = yield gen_types_1.genTypes(swaggerDoc, Object.assign({ external: true }, (opts.typesOpts || {})));
-            yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile);
             // - groups operations by tags
             // - "copies down" metadata which were present on higher ranks of the Doc to the scope
             // of each operation.
@@ -166,11 +165,16 @@ class GenPathsClass {
                 merged = prettier.format(merged, opts.prettierOpts);
                 yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged);
             })));
+            const typesFile = yield gen_types_1.genTypes(swaggerDoc, [...this.lookupPaths, ...this.typegen.foundRefs], Object.assign({ external: true }, (opts.typesOpts || {})));
+            yield util_1.promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile);
         });
     }
     unRef(param) {
         let path = param.$ref.substr(2).split("/");
         let found = lo.get(this.swaggerDoc, path);
+        if (found) {
+            this.lookupPaths.push(param.$ref);
+        }
         return found;
     }
     strip(op) {

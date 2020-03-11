@@ -71,7 +71,10 @@ export const DELETE_suppression_bounces = ApiCommon.requestMaker<
   id: "DELETE_suppression_bounces",
   path: "/suppression/bounces",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_suppression_bounces_email_Type = {

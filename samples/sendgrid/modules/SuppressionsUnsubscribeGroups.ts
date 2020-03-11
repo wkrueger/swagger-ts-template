@@ -22,7 +22,10 @@ export const GET_asm_groups = ApiCommon.requestMaker<GET_asm_groups_Type, GET_as
   id: "GET_asm_groups",
   path: "/asm/groups",
   verb: "GET",
-  parameters: [{ name: "id", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "id", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type POST_asm_groups_Type = {
@@ -57,7 +60,10 @@ export const POST_asm_groups = ApiCommon.requestMaker<
   id: "POST_asm_groups",
   path: "/asm/groups",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_asm_groups_group_id_Type = {

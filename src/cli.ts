@@ -30,7 +30,7 @@ if (action === "types") {
     }
 
     generator
-      .genTypes(parsed, {
+      .genTypes(parsed, ["#/definitions"], {
         hideComments: yargs.argv.c !== undefined,
         external: yargs.argv.e !== undefined
       })

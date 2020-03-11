@@ -50,7 +50,10 @@ export const PATCH_user_webhooks_event_settings = ApiCommon.requestMaker<
   id: "PATCH_user_webhooks_event_settings",
   path: "/user/webhooks/event/settings",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type POST_user_webhooks_event_test_Type = {
@@ -74,7 +77,10 @@ export const POST_user_webhooks_event_test = ApiCommon.requestMaker<
   id: "POST_user_webhooks_event_test",
   path: "/user/webhooks/event/test",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_user_webhooks_parse_stats_Type = {

@@ -102,7 +102,10 @@ export const POST_whitelabel_domains = ApiCommon.requestMaker<
   id: "POST_whitelabel_domains",
   path: "/whitelabel/domains",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_whitelabel_domains_domain_id_Type = {
@@ -408,7 +411,10 @@ export const DELETE_whitelabel_domains_subuser = ApiCommon.requestMaker<
   id: "DELETE_whitelabel_domains_subuser",
   path: "/whitelabel/domains/subuser",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type POST_whitelabel_domains_domain_id_subuser_Type = {

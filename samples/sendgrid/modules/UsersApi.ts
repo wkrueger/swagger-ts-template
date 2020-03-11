@@ -62,7 +62,10 @@ export const PATCH_user_profile = ApiCommon.requestMaker<
   id: "PATCH_user_profile",
   path: "/user/profile",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_user_account_Type = {
@@ -137,7 +140,10 @@ export const PUT_user_email = ApiCommon.requestMaker<PUT_user_email_Type, PUT_us
   id: "PUT_user_email",
   path: "/user/email",
   verb: "PUT",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_user_username_Type = {
@@ -191,7 +197,10 @@ export const PUT_user_username = ApiCommon.requestMaker<
   id: "PUT_user_username",
   path: "/user/username",
   verb: "PUT",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_user_credits_Type = {
@@ -249,5 +258,8 @@ export const PUT_user_password = ApiCommon.requestMaker<
   id: "PUT_user_password",
   path: "/user/password",
   verb: "PUT",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })

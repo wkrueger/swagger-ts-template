@@ -88,7 +88,10 @@ export const PATCH_tracking_settings_click = ApiCommon.requestMaker<
   id: "PATCH_tracking_settings_click",
   path: "/tracking_settings/click",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_tracking_settings_google_analytics_Type = {
@@ -143,7 +146,10 @@ export const PATCH_tracking_settings_google_analytics = ApiCommon.requestMaker<
   id: "PATCH_tracking_settings_google_analytics",
   path: "/tracking_settings/google_analytics",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_tracking_settings_open_Type = {
@@ -194,7 +200,10 @@ export const PATCH_tracking_settings_open = ApiCommon.requestMaker<
   id: "PATCH_tracking_settings_open",
   path: "/tracking_settings/open",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_tracking_settings_subscription_Type = {
@@ -245,5 +254,8 @@ export const PATCH_tracking_settings_subscription = ApiCommon.requestMaker<
   id: "PATCH_tracking_settings_subscription",
   path: "/tracking_settings/subscription",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })

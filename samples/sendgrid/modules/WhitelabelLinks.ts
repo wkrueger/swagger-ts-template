@@ -23,7 +23,10 @@ export const GET_whitelabel_links = ApiCommon.requestMaker<
   id: "GET_whitelabel_links",
   path: "/whitelabel/links",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type POST_whitelabel_links_Type = {
@@ -82,7 +85,10 @@ export const GET_whitelabel_links_id = ApiCommon.requestMaker<
   id: "GET_whitelabel_links_id",
   path: "/whitelabel/links/{id}",
   verb: "GET",
-  parameters: [{ name: "id", required: true, in: "path" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "id", required: true, in: "path" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type PATCH_whitelabel_links_id_Type = {
@@ -171,7 +177,10 @@ export const GET_whitelabel_links_default = ApiCommon.requestMaker<
   id: "GET_whitelabel_links_default",
   path: "/whitelabel/links/default",
   verb: "GET",
-  parameters: [{ name: "domain", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "domain", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type POST_whitelabel_links_id_validate_Type = {

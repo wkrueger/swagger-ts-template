@@ -138,7 +138,10 @@ export const PATCH_user_scheduled_sends_batch_id = ApiCommon.requestMaker<
   id: "PATCH_user_scheduled_sends_batch_id",
   path: "/user/scheduled_sends/{batch_id}",
   verb: "PATCH",
-  parameters: [{ name: "batch_id", required: true, in: "path" }, { name: "body", in: "body" }]
+  parameters: [
+    { name: "batch_id", required: true, in: "path" },
+    { name: "body", in: "body" }
+  ]
 })
 
 export type DELETE_user_scheduled_sends_batch_id_Type = {
@@ -160,5 +163,8 @@ export const DELETE_user_scheduled_sends_batch_id = ApiCommon.requestMaker<
   id: "DELETE_user_scheduled_sends_batch_id",
   path: "/user/scheduled_sends/{batch_id}",
   verb: "DELETE",
-  parameters: [{ name: "batch_id", required: true, in: "path" }, { name: "body", in: "body" }]
+  parameters: [
+    { name: "batch_id", required: true, in: "path" },
+    { name: "body", in: "body" }
+  ]
 })

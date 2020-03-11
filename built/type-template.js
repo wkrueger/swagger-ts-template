@@ -9,6 +9,7 @@ class TypeTemplate {
         this.definitionRoot = definitionRoot;
         this.mainDoc = mainDoc;
         this.refPrefix = refPrefix;
+        this.foundRefs = [];
         this.mapVariableName = opts.mapVariableName || (s => s);
     }
     typeTemplate(swaggerType, path, embraceObjects = false) {
@@ -27,6 +28,7 @@ class TypeTemplate {
             //   console.error("Strange variable name at " + path + " , reverting to any.")
             //   return { type: "primitive", data: ["any"] }
             // }
+            this.foundRefs.push(swaggerType.$ref);
             return {
                 data: [this.refPrefix + variableName],
                 type: "ref"

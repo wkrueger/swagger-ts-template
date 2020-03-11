@@ -20,6 +20,7 @@ export declare class GenPathsClass {
     opts: genPathsOpts;
     constructor(swaggerDoc: SwaggerDoc, opts: genPathsOpts);
     typegen: TypeTemplate;
+    lookupPaths: string[];
     preNormalize(): void;
     run(): Promise<void>;
     unRef(param: any): unknown;

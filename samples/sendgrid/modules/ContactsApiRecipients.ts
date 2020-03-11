@@ -54,7 +54,10 @@ export const POST_contactdb_recipients = ApiCommon.requestMaker<
   id: "POST_contactdb_recipients",
   path: "/contactdb/recipients",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type PATCH_contactdb_recipients_Type = {
@@ -84,7 +87,10 @@ export const PATCH_contactdb_recipients = ApiCommon.requestMaker<
   id: "PATCH_contactdb_recipients",
   path: "/contactdb/recipients",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type DELETE_contactdb_recipients_Type = {
@@ -108,7 +114,10 @@ export const DELETE_contactdb_recipients = ApiCommon.requestMaker<
   id: "DELETE_contactdb_recipients",
   path: "/contactdb/recipients",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_contactdb_recipients_Type = {
@@ -296,5 +305,8 @@ export const GET_contactdb_recipients_search = ApiCommon.requestMaker<
   id: "GET_contactdb_recipients_search",
   path: "/contactdb/recipients/search",
   verb: "GET",
-  parameters: [{ name: "on-behalf-of", in: "header" }, { name: "{field_name}", in: "query" }]
+  parameters: [
+    { name: "on-behalf-of", in: "header" },
+    { name: "{field_name}", in: "query" }
+  ]
 })

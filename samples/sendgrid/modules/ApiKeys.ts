@@ -18,7 +18,10 @@ export const GET_api_keys = ApiCommon.requestMaker<GET_api_keys_Type, GET_api_ke
   id: "GET_api_keys",
   path: "/api_keys",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type create_api_keys_Type = {
@@ -55,7 +58,10 @@ export const create_api_keys = ApiCommon.requestMaker<
   id: "create_api_keys",
   path: "/api_keys",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_api_keys_api_key_id_Type = {

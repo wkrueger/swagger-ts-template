@@ -80,7 +80,10 @@ export const PATCH_mail_settings_bcc = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_bcc",
   path: "/mail_settings/bcc",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_address_whitelist_Type = {
@@ -130,7 +133,10 @@ export const PATCH_mail_settings_address_whitelist = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_address_whitelist",
   path: "/mail_settings/address_whitelist",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_footer_Type = {
@@ -177,7 +183,10 @@ export const PATCH_mail_settings_footer = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_footer",
   path: "/mail_settings/footer",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_forward_spam_Type = {
@@ -224,7 +233,10 @@ export const PATCH_mail_settings_forward_spam = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_forward_spam",
   path: "/mail_settings/forward_spam",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_plain_content_Type = {
@@ -271,7 +283,10 @@ export const PATCH_mail_settings_plain_content = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_plain_content",
   path: "/mail_settings/plain_content",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_spam_check_Type = {
@@ -322,7 +337,10 @@ export const PATCH_mail_settings_spam_check = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_spam_check",
   path: "/mail_settings/spam_check",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_template_Type = {
@@ -379,7 +397,10 @@ export const PATCH_mail_settings_template = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_template",
   path: "/mail_settings/template",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_bounce_purge_Type = {
@@ -426,7 +447,10 @@ export const PATCH_mail_settings_bounce_purge = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_bounce_purge",
   path: "/mail_settings/bounce_purge",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_mail_settings_forward_bounce_Type = {
@@ -473,5 +497,8 @@ export const PATCH_mail_settings_forward_bounce = ApiCommon.requestMaker<
   id: "PATCH_mail_settings_forward_bounce",
   path: "/mail_settings/forward_bounce",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })

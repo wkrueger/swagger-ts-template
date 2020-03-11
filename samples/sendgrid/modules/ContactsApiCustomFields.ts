@@ -28,7 +28,10 @@ export const POST_contactdb_custom_fields = ApiCommon.requestMaker<
   id: "POST_contactdb_custom_fields",
   path: "/contactdb/custom_fields",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_contactdb_custom_fields_Type = {

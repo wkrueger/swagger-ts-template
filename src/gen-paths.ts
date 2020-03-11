@@ -44,6 +44,7 @@ export class GenPathsClass {
     this.typegen = new TypeTemplate(this.opts.typesOpts!, "definitions", this.swaggerDoc, "Types.")
   }
   typegen: TypeTemplate
+  lookupPaths = ["#/definitions"]
 
   preNormalize() {
     this.swaggerDoc = this.swaggerDoc || {}
@@ -74,12 +75,6 @@ export class GenPathsClass {
       path.resolve(__dirname, "..", "src", "api-common.ts"),
       path.resolve(opts.output, "api-common.ts")
     )
-    const typesFile = await genTypes(swaggerDoc, {
-      external: true,
-      //filename: path.resolve(opts.output, "api-types.d.ts"),
-      ...(opts.typesOpts || {})
-    })
-    await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
 
     // - groups operations by tags
     // - "copies down" metadata which were present on higher ranks of the Doc to the scope
@@ -189,11 +184,21 @@ export class GenPathsClass {
         await promisify(fs.writeFile)(path.resolve(opts.output, "modules", tag + ".ts"), merged)
       })
     )
+
+    const typesFile = await genTypes(swaggerDoc, [...this.lookupPaths, ...this.typegen.foundRefs], {
+      external: true,
+      //filename: path.resolve(opts.output, "api-types.d.ts"),
+      ...(opts.typesOpts || {})
+    })
+    await promisify(fs.writeFile)(path.resolve(opts.output, "api-types.d.ts"), typesFile)
   }
 
   unRef(param) {
     let path = param.$ref.substr(2).split("/")
     let found = lo.get(this.swaggerDoc, path)
+    if (found) {
+      this.lookupPaths.push(param.$ref)
+    }
     return found
   }
 

@@ -16,6 +16,7 @@ export class TypeTemplate {
   }
 
   mapVariableName: (s: string) => string
+  foundRefs = [] as string[]
 
   typeTemplate(
     swaggerType: SwaggerType | string,
@@ -38,6 +39,7 @@ export class TypeTemplate {
       //   console.error("Strange variable name at " + path + " , reverting to any.")
       //   return { type: "primitive", data: ["any"] }
       // }
+      this.foundRefs.push(swaggerType.$ref)
       return {
         data: [this.refPrefix + variableName],
         type: "ref"

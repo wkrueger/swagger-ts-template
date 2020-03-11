@@ -43,7 +43,10 @@ export const POST_ips_warmup = ApiCommon.requestMaker<
   id: "POST_ips_warmup",
   path: "/ips/warmup",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_ips_warmup_ip_address_Type = {

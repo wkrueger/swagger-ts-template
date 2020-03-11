@@ -64,7 +64,10 @@ export const GET_campaigns = ApiCommon.requestMaker<GET_campaigns_Type, GET_camp
   id: "GET_campaigns",
   path: "/campaigns",
   verb: "GET",
-  parameters: [{ name: "limit", in: "query" }, { name: "offset", in: "query" }]
+  parameters: [
+    { name: "limit", in: "query" },
+    { name: "offset", in: "query" }
+  ]
 })
 
 export type GET_campaigns_campaign_id_Type = {
@@ -129,7 +132,10 @@ export const DELETE_campaigns_campaign_id = ApiCommon.requestMaker<
   id: "DELETE_campaigns_campaign_id",
   path: "/campaigns/{campaign_id}",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type PATCH_campaigns_campaign_id_Type = {
@@ -159,7 +165,10 @@ export const PATCH_campaigns_campaign_id = ApiCommon.requestMaker<
   id: "PATCH_campaigns_campaign_id",
   path: "/campaigns/{campaign_id}",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type POST_campaigns_campaign_id_schedules_now_Type = {
@@ -188,7 +197,10 @@ export const POST_campaigns_campaign_id_schedules_now = ApiCommon.requestMaker<
   id: "POST_campaigns_campaign_id_schedules_now",
   path: "/campaigns/{campaign_id}/schedules/now",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type POST_campaigns_campaign_id_schedules_Type = {
@@ -216,7 +228,10 @@ export const POST_campaigns_campaign_id_schedules = ApiCommon.requestMaker<
   id: "POST_campaigns_campaign_id_schedules",
   path: "/campaigns/{campaign_id}/schedules",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type PATCH_campaigns_campaign_id_schedules_Type = {
@@ -244,7 +259,10 @@ export const PATCH_campaigns_campaign_id_schedules = ApiCommon.requestMaker<
   id: "PATCH_campaigns_campaign_id_schedules",
   path: "/campaigns/{campaign_id}/schedules",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type GET_campaigns_campaign_id_schedules_Type = {
@@ -294,7 +312,10 @@ export const DELETE_campaigns_campaign_id_schedules = ApiCommon.requestMaker<
   id: "DELETE_campaigns_campaign_id_schedules",
   path: "/campaigns/{campaign_id}/schedules",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })
 
 export type POST_campaigns_campaign_id_schedules_test_Type = {
@@ -320,5 +341,8 @@ export const POST_campaigns_campaign_id_schedules_test = ApiCommon.requestMaker<
   id: "POST_campaigns_campaign_id_schedules_test",
   path: "/campaigns/{campaign_id}/schedules/test",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "campaign_id", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "campaign_id", required: true, in: "path" }
+  ]
 })

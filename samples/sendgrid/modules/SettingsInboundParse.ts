@@ -21,7 +21,10 @@ export const POST_user_webhooks_parse_settings = ApiCommon.requestMaker<
   id: "POST_user_webhooks_parse_settings",
   path: "/user/webhooks/parse/settings",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_user_webhooks_parse_settings_Type = {

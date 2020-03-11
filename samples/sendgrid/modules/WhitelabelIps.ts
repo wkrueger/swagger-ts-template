@@ -62,7 +62,10 @@ export const POST_whitelabel_ips = ApiCommon.requestMaker<
   id: "POST_whitelabel_ips",
   path: "/whitelabel/ips",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_whitelabel_ips_id_Type = {
@@ -86,7 +89,10 @@ export const GET_whitelabel_ips_id = ApiCommon.requestMaker<
   id: "GET_whitelabel_ips_id",
   path: "/whitelabel/ips/{id}",
   verb: "GET",
-  parameters: [{ name: "id", required: true, in: "path" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "id", required: true, in: "path" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type DELETE_whitelabel_ips_id_Type = {

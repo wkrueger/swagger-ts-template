@@ -36,7 +36,10 @@ export const POST_senders = ApiCommon.requestMaker<POST_senders_Type, POST_sende
   id: "POST_senders",
   path: "/senders",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_v3_senders_Type = {

@@ -77,7 +77,10 @@ export const PATCH_subusers_subuser_name = ApiCommon.requestMaker<
   id: "PATCH_subusers_subuser_name",
   path: "/subusers/{subuser_name}",
   verb: "PATCH",
-  parameters: [{ name: "body", in: "body" }, { name: "subuser_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "subuser_name", required: true, in: "path" }
+  ]
 })
 
 export type DELETE_subusers_subuser_name_Type = {
@@ -102,7 +105,10 @@ export const DELETE_subusers_subuser_name = ApiCommon.requestMaker<
   id: "DELETE_subusers_subuser_name",
   path: "/subusers/{subuser_name}",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "subuser_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "subuser_name", required: true, in: "path" }
+  ]
 })
 
 export type GET_subusers_subuser_name_monitor_Type = {
@@ -141,7 +147,10 @@ export const POST_subusers_subuser_name_monitor = ApiCommon.requestMaker<
   id: "POST_subusers_subuser_name_monitor",
   path: "/subusers/{subuser_name}/monitor",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "subuser_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "subuser_name", required: true, in: "path" }
+  ]
 })
 
 export type PUT_subusers_subuser_name_monitor_Type = {
@@ -161,7 +170,10 @@ export const PUT_subusers_subuser_name_monitor = ApiCommon.requestMaker<
   id: "PUT_subusers_subuser_name_monitor",
   path: "/subusers/{subuser_name}/monitor",
   verb: "PUT",
-  parameters: [{ name: "body", in: "body" }, { name: "subuser_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "subuser_name", required: true, in: "path" }
+  ]
 })
 
 export type DELETE_subusers_subuser_name_monitor_Type = {

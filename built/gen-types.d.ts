@@ -6,7 +6,7 @@ export interface genTypesOpts {
     mapVariableName?: (s: string) => string;
     prettierOpts?: prettier.Options;
 }
-export declare function genTypes(swaggerDoc: SwaggerDoc, opts?: genTypesOpts): Promise<string>;
+export declare function genTypes(swaggerDoc: SwaggerDoc, lookupPaths: string[], opts?: genTypesOpts): Promise<string>;
 export declare const fixVariableName: (s: string) => string;
 export declare const defaultPrettierOpts: prettier.Options;
 export {};

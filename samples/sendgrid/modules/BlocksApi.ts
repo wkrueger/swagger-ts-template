@@ -69,7 +69,10 @@ export const DELETE_suppression_blocks = ApiCommon.requestMaker<
   id: "DELETE_suppression_blocks",
   path: "/suppression/blocks",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_suppression_blocks_email_Type = {

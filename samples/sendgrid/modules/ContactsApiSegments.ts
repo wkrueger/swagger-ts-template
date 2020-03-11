@@ -41,7 +41,10 @@ export const POST_contactdb_segments = ApiCommon.requestMaker<
   id: "POST_contactdb_segments",
   path: "/contactdb/segments",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_contactdb_segments_Type = {

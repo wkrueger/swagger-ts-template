@@ -72,7 +72,10 @@ export const DELETE_suppression_invalid_emails = ApiCommon.requestMaker<
   id: "DELETE_suppression_invalid_emails",
   path: "/suppression/invalid_emails",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "on-behalf-of", in: "header" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "on-behalf-of", in: "header" }
+  ]
 })
 
 export type GET_suppression_invalid_emails_email_Type = {

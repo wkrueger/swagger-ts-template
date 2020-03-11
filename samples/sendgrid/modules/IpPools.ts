@@ -97,7 +97,10 @@ export const PUT_ips_pools_pool_name = ApiCommon.requestMaker<
   id: "PUT_ips_pools_pool_name",
   path: "/ips/pools/{pool_name}",
   verb: "PUT",
-  parameters: [{ name: "body", in: "body" }, { name: "pool_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "pool_name", required: true, in: "path" }
+  ]
 })
 
 export type DELETE_ips_pools_pool_name_Type = {
@@ -123,7 +126,10 @@ export const DELETE_ips_pools_pool_name = ApiCommon.requestMaker<
   id: "DELETE_ips_pools_pool_name",
   path: "/ips/pools/{pool_name}",
   verb: "DELETE",
-  parameters: [{ name: "body", in: "body" }, { name: "pool_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "pool_name", required: true, in: "path" }
+  ]
 })
 
 export type POST_ips_pools_pool_name_ips_Type = {
@@ -152,7 +158,10 @@ export const POST_ips_pools_pool_name_ips = ApiCommon.requestMaker<
   id: "POST_ips_pools_pool_name_ips",
   path: "/ips/pools/{pool_name}/ips",
   verb: "POST",
-  parameters: [{ name: "body", in: "body" }, { name: "pool_name", required: true, in: "path" }]
+  parameters: [
+    { name: "body", in: "body" },
+    { name: "pool_name", required: true, in: "path" }
+  ]
 })
 
 export type DELETE_ips_pools_pool_name_ips_ip_Type = {
