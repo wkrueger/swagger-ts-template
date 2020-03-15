@@ -2,10 +2,12 @@ import { genTypesOpts } from "./gen-types";
 import { TypeTemplate } from "./type-template";
 import prettier = require("prettier");
 declare type SwaggerDoc = SwaggerIo.V2.SchemaJson;
-declare type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation & {
+interface Operation extends SwaggerIo.V2.SchemaJson.Definitions.Operation {
     __path__: string;
+    __tag__: string;
     __verb__: string;
-};
+    __parentParameters__: string;
+}
 declare type genPathsOpts = {
     output: string;
     moduleStyle: "commonjs" | "esm";
@@ -23,8 +25,8 @@ export declare class GenPathsClass {
     lookupPaths: string[];
     preNormalize(): void;
     run(): Promise<void>;
-    unRef(param: any): unknown;
-    strip(op: any[]): {}[];
+    unRef(param: any): any;
+    strip(op: any[]): Pick<any, string | number | symbol>[];
     /** response types may lie in different places... */
     findResponseSchema(operation: any): any;
     /** operation comment block, string, merged into template */

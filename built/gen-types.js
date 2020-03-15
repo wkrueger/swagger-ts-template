@@ -58,11 +58,10 @@ exports.defaultPrettierOpts = {
     parser: "typescript"
 };
 function lookupPath(doc, path, list = []) {
-    var _a, _b, _c, _d;
     const found = lo.get(doc, path);
     if (typeof found !== "object")
         return;
-    if (((_a = found) === null || _a === void 0 ? void 0 : _a.type) || ((_b = found) === null || _b === void 0 ? void 0 : _b.allOf) || ((_c = found) === null || _c === void 0 ? void 0 : _c.$ref) || ((_d = found) === null || _d === void 0 ? void 0 : _d.anyOf)) {
+    if ((found === null || found === void 0 ? void 0 : found.type) || (found === null || found === void 0 ? void 0 : found.allOf) || (found === null || found === void 0 ? void 0 : found.$ref) || (found === null || found === void 0 ? void 0 : found.anyOf)) {
         list.push({ name: path[path.length - 1], def: found, srcPath: path.join(".") });
     }
     else {
