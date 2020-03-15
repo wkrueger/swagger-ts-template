@@ -23,7 +23,6 @@ class GenPathsClass {
     constructor(swaggerDoc, opts) {
         this.swaggerDoc = swaggerDoc;
         this.opts = opts;
-        this.lookupPaths = ["#/definitions"];
         if (!opts.output)
             throw Error("Missing parameter: output.");
         opts.moduleStyle = opts.moduleStyle || "commonjs";
@@ -33,6 +32,11 @@ class GenPathsClass {
         opts.typesOpts = Object.assign(Object.assign({}, (opts.typesOpts || {})), { prettierOpts: opts.prettierOpts });
         this.preNormalize();
         this.typegen = new type_template_1.TypeTemplate(this.opts.typesOpts, "definitions", this.swaggerDoc, "Types.");
+        this.lookupPaths = opts.lookupPaths || [];
+        const definitionsPath = "#/definitions";
+        if (!this.lookupPaths.includes(definitionsPath)) {
+            this.lookupPaths.push(definitionsPath);
+        }
     }
     preNormalize() {
         this.swaggerDoc = this.swaggerDoc || {};

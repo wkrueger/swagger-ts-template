@@ -30,7 +30,8 @@ type genPathsOpts = {
     methodKey: string
   ) => Operation
   templateString?: string
-  prettierOpts?: prettier.Options
+  prettierOpts?: prettier.Options,
+  lookupPaths?: string[]
 }
 
 export class GenPathsClass {
@@ -43,9 +44,14 @@ export class GenPathsClass {
     opts.typesOpts = { ...(opts.typesOpts || {}), prettierOpts: opts.prettierOpts }
     this.preNormalize()
     this.typegen = new TypeTemplate(this.opts.typesOpts!, "definitions", this.swaggerDoc, "Types.")
+    this.lookupPaths = opts.lookupPaths || [];
+    const definitionsPath = "#/definitions";
+    if (!this.lookupPaths.includes(definitionsPath)) {
+      this.lookupPaths.push(definitionsPath);
+    }
   }
   typegen: TypeTemplate
-  lookupPaths = ["#/definitions"]
+  lookupPaths: string[]
 
   preNormalize() {
     this.swaggerDoc = this.swaggerDoc || {}
