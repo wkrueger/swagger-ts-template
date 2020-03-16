@@ -10,12 +10,13 @@ import { TypeTemplate } from "./type-template"
 import prettier = require("prettier")
 
 type SwaggerDoc = SwaggerIo.V2.SchemaJson
-type Operation = SwaggerIo.V2.SchemaJson.Definitions.Operation & {
-  __path__: string
-  __verb__: string
-}
 
-type Values<T extends {}> = T[keyof T]
+interface Operation extends SwaggerIo.V2.SchemaJson.Definitions.Operation {
+  __path__: string
+  __tag__: string
+  __verb__: string
+  __parentParameters__: string
+}
 
 type genPathsOpts = {
   output: string
@@ -81,8 +82,8 @@ export class GenPathsClass {
     // of each operation.
     // FIXME: cryptic code. Lodash chain bad.
     let tags: any = lo
-      .chain(swaggerDoc.paths)
-      .toPairs<Values<typeof swaggerDoc.paths>>()
+      .chain((swaggerDoc.paths as any) as Record<string, Operation>)
+      .toPairs()
       .map(([path, schema]) => {
         //search for a tag name
         let tags = (() => {
@@ -91,7 +92,7 @@ export class GenPathsClass {
           for (let it = 0; it < verbs.length; it++) {
             let verb = verbs[it]
             if (verb === "parameters") continue
-            let operation: SwaggerIo.V2.SchemaJson.Definitions.Operation = schema[verb]
+            let operation: Operation = schema[verb]
             if (!operation.tags?.length) {
               operation.tags = [this.generateOperationTag(path)]
             }
