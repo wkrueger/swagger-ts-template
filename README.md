@@ -67,28 +67,26 @@ This setting is global and must be run before the 1st request takes place.
 Sample:
 
 ```typescript
-import { SwaggerRequester, IRequest, IOperation, settings } from "./swagger/api-common";
-import { authToken_Response } from "./swagger/modules/Auth";
+import {
+  SwaggerRequester,
+  IRequest,
+  IOperation,
+  settings
+} from "./gen/api-common";
 
-const BACKEND_URL = process.env.BACKEND_URL!;
+const BACKEND_URL = process.env.GEOS_API_URL!;
 
 class RestRequester extends SwaggerRequester {
-  getCurrentToken(): authToken_Response {
-    const stored = localStorage.get("auth_info") || "{}";
-    return JSON.parse(stored);
-  }
-
   async handler(
     request: IRequest & GApiCommon.MergeToRequest,
     input: Record<string, any>,
     operation: IOperation
   ) {
-    const url = new URL(BACKEND_URL);
+    const url = new URL(BACKEND_URL + request.url);
     const params = request.query || {};
     Object.keys(params).forEach(key =>
       url.searchParams.append(key, params[key])
     );
-    const token = this.getCurrentToken().access;
     const body = ["GET", "DELETE"].includes(request.verb!)
       ? undefined
       : JSON.stringify(request.body);
@@ -96,17 +94,31 @@ class RestRequester extends SwaggerRequester {
       method: request.verb,
       body,
       headers: {
-        "Content-Type": "application/json",
-        Authorization: token ? `Bearer ${token}` : (undefined as any)
+        "Content-Type": "application/json"
       }
     });
     if (fetchResp.status === 204) return {};
-    return fetchResp.json();
+    if (String(fetchResp.status).charAt(0) !== "2") {
+      const clone = fetchResp.clone();
+      try {
+        const json = await fetchResp.json();
+        const msg = json?.error?.message;
+        const err = Error(msg || "Request error.");
+        (err as any).pass = true;
+        throw err;
+      } catch (err) {
+        if (err.pass) throw err;
+        const txt = await clone.text();
+        throw Error(txt);
+      }
+    }
+    const out = fetchResp.json();
+    return out;
   }
 }
 
-const requester = new RestRequester()
-settings.getRequester = () => requester
+const requester = new RestRequester();
+settings.getRequester = () => requester;
 ```
 
 ## Generated consumer API
