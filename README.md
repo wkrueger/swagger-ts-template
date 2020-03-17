@@ -6,9 +6,9 @@ This fork's npm package:
 yarn add @proerd/swagger-ts-template
 ```
 
-Quick 'n dirty solution to integrate swagger v2 into a typescript codebase.
+Quick 'n dirty solution to integrate swagger v2 into a typescript codebase. Partial OAI v3 support.
 
- - Generates an (opinionated) typescript consumer API. Call REST APIs just as functions. Forget about HTTP details. Get doc suggestions and typed responses.
+- Generates an (opinionated) typescript consumer API. Call REST APIs just as functions. Forget about HTTP details. Get doc suggestions and typed responses.
 
 ```javascript
 var generator = require("swagger-ts-template")
@@ -67,14 +67,9 @@ This setting is global and must be run before the 1st request takes place.
 Sample:
 
 ```typescript
-import {
-  SwaggerRequester,
-  IRequest,
-  IOperation,
-  settings
-} from "./gen/api-common";
+import { SwaggerRequester, IRequest, IOperation, settings } from "./gen/api-common"
 
-const BACKEND_URL = process.env.GEOS_API_URL!;
+const BACKEND_URL = process.env.GEOS_API_URL!
 
 class RestRequester extends SwaggerRequester {
   async handler(
@@ -82,43 +77,41 @@ class RestRequester extends SwaggerRequester {
     input: Record<string, any>,
     operation: IOperation
   ) {
-    const url = new URL(BACKEND_URL + request.url);
-    const params = request.query || {};
-    Object.keys(params).forEach(key =>
-      url.searchParams.append(key, params[key])
-    );
+    const url = new URL(BACKEND_URL + request.url)
+    const params = request.query || {}
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]))
     const body = ["GET", "DELETE"].includes(request.verb!)
       ? undefined
-      : JSON.stringify(request.body);
+      : JSON.stringify(request.body)
     const fetchResp = await fetch(url.toString(), {
       method: request.verb,
       body,
       headers: {
         "Content-Type": "application/json"
       }
-    });
-    if (fetchResp.status === 204) return {};
+    })
+    if (fetchResp.status === 204) return {}
     if (String(fetchResp.status).charAt(0) !== "2") {
-      const clone = fetchResp.clone();
+      const clone = fetchResp.clone()
       try {
-        const json = await fetchResp.json();
-        const msg = json?.error?.message;
-        const err = Error(msg || "Request error.");
-        (err as any).pass = true;
-        throw err;
+        const json = await fetchResp.json()
+        const msg = json?.error?.message
+        const err = Error(msg || "Request error.")
+        ;(err as any).pass = true
+        throw err
       } catch (err) {
-        if (err.pass) throw err;
-        const txt = await clone.text();
-        throw Error(txt);
+        if (err.pass) throw err
+        const txt = await clone.text()
+        throw Error(txt)
       }
     }
-    const out = fetchResp.json();
-    return out;
+    const out = fetchResp.json()
+    return out
   }
 }
 
-const requester = new RestRequester();
-settings.getRequester = () => requester;
+const requester = new RestRequester()
+settings.getRequester = () => requester
 ```
 
 ## Generated consumer API

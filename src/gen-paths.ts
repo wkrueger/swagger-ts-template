@@ -56,6 +56,22 @@ export class GenPathsClass {
       const path = this.swaggerDoc.paths[pathKey]
       Object.keys(path).forEach(opKey => {
         if (opKey === "parameters") return
+        if (path[opKey].requestBody) {
+          // oai v2 <> oai v3
+          const verb = path[opKey] as any
+          let content = verb.requestBody.content["application/json"]
+          if (!content) content = verb.requestBody.content[Object.keys(verb.requestBody.content)[0]]
+          if (content) {
+            const params = ((path as any).parameters = (path as any).parameters || [])
+            params.push({
+              description: verb.requestBody.description,
+              required: verb.requestBody.required,
+              in: "body",
+              name: "body",
+              schema: content.schema
+            } as SwaggerIo.V2.SchemaJson.Definitions.BodyParameter)
+          }
+        }
         if (this.opts.mapOperation) {
           path[opKey] = this.opts.mapOperation(path[opKey], path, pathKey, opKey)
         }

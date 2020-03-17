@@ -18,7 +18,8 @@
           "operation": { "type": "object" },
           "media": { "type": "object" },
           "createdAt": { "format": "date-time", "type": "string" },
-          "extent": { "type": "string" }
+          "extent": { "type": "string" },
+          "notes": { "type": "string" }
         },
         "required": ["id", "store", "operation", "media", "createdAt"]
       },
@@ -47,6 +48,15 @@
           "limit": { "type": "number" },
           "offset": { "type": "number" }
         }
+      },
+      "CreateFromMediaDto": {
+        "type": "object",
+        "properties": {
+          "mediaUuid": { "type": "string" },
+          "storeCode": { "type": "string" },
+          "notes": { "type": "string" }
+        },
+        "required": ["mediaUuid", "storeCode"]
       },
       "CreateLayerDto": {
         "type": "object",
@@ -102,7 +112,9 @@
       },
       "get": {
         "operationId": "StoreController_list",
-        "parameters": [],
+        "parameters": [
+          { "name": "id", "required": false, "in": "query", "schema": { "type": "number" } }
+        ],
         "responses": {
           "200": {
             "description": "",
@@ -151,7 +163,7 @@
       "post": {
         "operationId": "DatasetController_create",
         "summary": "",
-        "description": "Requires a multipart body with fields:\n  - storeCode: the string code of the target store\n  - file: a geoPackage. First dataset will be taken\n\nCurrently requires and assumes EPSG:4326 projection.\n",
+        "description": "Requires a multipart body with fields:\n  - storeCode: the string code of the target store\n  - file: a geoPackage. First dataset will be taken. Must have name metadata.\n\nCurrently requires and assumes EPSG:4326 projection.\n",
         "parameters": [],
         "responses": {
           "201": {
@@ -176,6 +188,29 @@
               "application/json": {
                 "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Dataset" } }
               }
+            }
+          }
+        },
+        "tags": ["datasets"]
+      }
+    },
+    "/datasets/from-media": {
+      "post": {
+        "operationId": "DatasetController_createFromMedia",
+        "summary": "",
+        "description": "Populates a dataset from an already uploaded media file.\n",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": { "schema": { "$ref": "#/components/schemas/CreateFromMediaDto" } }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": { "schema": { "$ref": "#/components/schemas/Dataset" } }
             }
           }
         },
