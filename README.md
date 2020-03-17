@@ -64,25 +64,49 @@ You have to bootstrap the api skeleton telling how should you run the requests.
 
 This setting is global and must be run before the 1st request takes place.
 
-```typescript
-import { SwaggerRequester, settings as swaggerSettings, IRequest } from "./swagger/api-common"
+Sample:
 
-class MyRequester extends SwaggerRequester {
-  handler(request: IRequest) {
-    const opts = request.options || {}
-    const resp = await doTheRequest(
-      request.verb as any,
-      request.url,
-      request.query,
-      request.body,
-      opts
-    )
-    return resp || {}
+```typescript
+import { SwaggerRequester, IRequest, IOperation, settings } from "./swagger/api-common";
+import { authToken_Response } from "./swagger/modules/Auth";
+
+const BACKEND_URL = process.env.BACKEND_URL!;
+
+class RestRequester extends SwaggerRequester {
+  getCurrentToken(): authToken_Response {
+    const stored = localStorage.get("auth_info") || "{}";
+    return JSON.parse(stored);
+  }
+
+  async handler(
+    request: IRequest & GApiCommon.MergeToRequest,
+    input: Record<string, any>,
+    operation: IOperation
+  ) {
+    const url = new URL(BACKEND_URL);
+    const params = request.query || {};
+    Object.keys(params).forEach(key =>
+      url.searchParams.append(key, params[key])
+    );
+    const token = this.getCurrentToken().access;
+    const body = ["GET", "DELETE"].includes(request.verb!)
+      ? undefined
+      : JSON.stringify(request.body);
+    const fetchResp = await fetch(url.toString(), {
+      method: request.verb,
+      body,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: token ? `Bearer ${token}` : (undefined as any)
+      }
+    });
+    if (fetchResp.status === 204) return {};
+    return fetchResp.json();
   }
 }
 
-const myRequester = new MyRequester()
-swaggerSettings.getRequester = () => myRequester
+const requester = new RestRequester()
+settings.getRequester = () => requester
 ```
 
 ## Generated consumer API
