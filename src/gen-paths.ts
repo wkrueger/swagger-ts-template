@@ -62,7 +62,7 @@ export class GenPathsClass {
           let content = verb.requestBody.content["application/json"]
           if (!content) content = verb.requestBody.content[Object.keys(verb.requestBody.content)[0]]
           if (content) {
-            const params = ((path as any).parameters = (path as any).parameters || [])
+            const params = (verb.parameters = verb.parameters || [])
             params.push({
               description: verb.requestBody.description,
               required: verb.requestBody.required,
